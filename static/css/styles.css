@@ -1,0 +1,190 @@
+:root {
+    /* Premier League Colors */
+    --pl-purple: #38003c;
+    --pl-green: #00ff85;
+    --pl-white: #ffffff;
+    --pl-light-purple: #4a0e4e;
+    --pl-dark-green: #00cc6a;
+    
+    /* Light Theme */
+    --bg-primary: var(--pl-white);
+    --bg-secondary: #f8f9fa;
+    --bg-card: var(--pl-white);
+    --text-primary: var(--pl-purple);
+    --text-secondary: #666;
+    --border: #e0e0e0;
+    --shadow: rgba(56, 0, 60, 0.1);
+}
+
+[data-theme="dark"] {
+    /* Dark Theme */
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --bg-card: #333;
+    --text-primary: var(--pl-white);
+    --text-secondary: #ccc;
+    --border: #555;
+    --shadow: rgba(0, 0, 0, 0.3);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    overflow-x: hidden;
+    padding-bottom: 80px; /* Space for bottom nav */
+}
+
+/* Header */
+.header {
+    background: linear-gradient(135deg, var(--pl-purple) 0%, var(--pl-light-purple) 100%);
+    color: var(--pl-white);
+    padding: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 10px var(--shadow);
+}
+
+.header h1 {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/* Main Content */
+.main-content {
+    padding: 1rem;
+    min-height: calc(100vh - 160px);
+}
+
+/* Tab Content */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Welcome Section */
+.welcome-section {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 2px 8px var(--shadow);
+    border: 1px solid var(--border);
+    margin-bottom: 2rem;
+}
+
+.welcome-section h2 {
+    color: var(--pl-purple);
+    margin-bottom: 1rem;
+    font-size: 2rem;
+}
+
+.welcome-section p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    display: flex;
+    box-shadow: 0 -2px 10px var(--shadow);
+}
+
+.nav-item {
+    flex: 1;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+}
+
+.nav-item.active {
+    color: var(--pl-green);
+    background: var(--bg-secondary);
+}
+
+.nav-item:hover {
+    background: var(--bg-secondary);
+}
+
+.nav-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.nav-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* Loading and Error States */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid var(--border);
+    border-radius: 50%;
+    border-top-color: var(--pl-green);
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.error-message {
+    background: #fee;
+    color: #c33;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border: 1px solid #fcc;
+}
+
+.success-message {
+    background: #efe;
+    color: #363;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border: 1px solid #cfc;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .gw-controls {
+        justify-content: center;
+    }
+    
+    .welcome-section h2 {
+        font-size: 1.5rem;
+    }
+    
+    .welcome-section p {
+        font-size: 1rem;
+    }
+}

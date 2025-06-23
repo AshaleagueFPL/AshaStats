@@ -1,0 +1,31 @@
+<!-- League Configuration -->
+<div class="settings-section">
+    <h3>⚽ League Configuration</h3>
+    <div class="form-group">
+        <label for="league-id">League ID</label>
+        <input type="text" id="league-id" class="form-input" placeholder="Enter your FPL League ID">
+    </div>
+    <button class="btn-primary" onclick="saveLeagueId()">Save League</button>
+    <div id="league-status"></div>
+</div>
+
+<!-- Theme Settings -->
+<div class="settings-section">
+    <h3>🎨 Appearance</h3>
+    <div class="form-group">
+        <label for="dark-mode">Dark Mode</label>
+        <label class="toggle-switch">
+            <input type="checkbox" id="dark-mode" onchange="toggleTheme()">
+            <span class="slider"></span>
+        </label>
+    </div>
+</div>
+
+<!-- App Info -->
+<div class="settings-section">
+    <h3>ℹ️ App Information</h3>
+    <p><strong>Version:</strong> 1.0.0</p>
+    <p><strong>Current Gameweek:</strong> <span id="info-current-gw">-</span></p>
+    <p><strong>League Teams:</strong> <span id="info-team-count">-</span></p>
+    <button class="btn-primary" onclick="refreshData()">Refresh Data</button>
+</div>

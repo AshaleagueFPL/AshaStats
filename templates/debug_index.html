@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#38003c">
+    <title>FPL League Analyzer</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="FPL Stats">
+    
+    <!-- Inline Styles for Debug -->
+    <style>
+        :root {
+            --pl-purple: #38003c;
+            --pl-green: #00ff85;
+            --pl-white: #ffffff;
+            --pl-light-purple: #4a0e4e;
+            --pl-dark-green: #00cc6a;
+            --bg-primary: var(--pl-white);
+            --bg-secondary: #f8f9fa;
+            --bg-card: var(--pl-white);
+            --text-primary: var(--pl-purple);
+            --text-secondary: #666;
+            --border: #e0e0e0;
+            --shadow: rgba(56, 0, 60, 0.1);
+        }
+        
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-card: #333;
+            --text-primary: var(--pl-white);
+            --text-secondary: #ccc;
+            --border: #555;
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            padding-bottom: 80px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--pl-purple) 0%, var(--pl-light-purple) 100%);
+            color: var(--pl-white);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px var(--shadow);
+        }
+        
+        .header h1 {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .main-content {
+            padding: 1rem;
+            min-height: calc(100vh - 160px);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .welcome-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 2px 8px var(--shadow);
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+        
+        .welcome-section h2 {
+            color: var(--pl-purple);
+            margin-bottom: 1rem;
+            font-size: 2rem;
+        }
+        
+        .welcome-section p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            display: flex;
+            box-shadow: 0 -2px 10px var(--shadow);
+        }
+        
+        .nav-item {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.2s;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+        }
+        
+        .nav-item.active {
+            color: var(--pl-green);
+            background: var(--bg-secondary);
+        }
+        
+        .nav-item:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .nav-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .nav-label {
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 1px solid #fcc;
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .debug-info {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        
+        .debug-info h3 {
+            margin-bottom: 0.5rem;
+            color: var(--pl-purple);
+        }
+        
+        .status {
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <!-- Header -->
+    <header class="header">
+        <h1>🏆 FPL League Analyzer</h1>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Home Tab -->
+        <div id="home-tab" class="tab-content active">
+            <div class="welcome-section">
+                <h2>Hello and Welcome to the app!</h2>
+                <p>Your Fantasy Premier League mini-league analysis tool.</p>
+            </div>
+            
+            <!-- Debug Information -->
+            <div class="debug-info">
+                <h3>🔧 Debug Information</h3>
+                <div id="debug-status">
+                    <div class="status loading">Initializing...</div>
+                </div>
+                <div id="api-tests"></div>
+            </div>
+        </div>
+        
+        <!-- Stats Tab -->
+        <div id="stats-tab" class="tab-content">
+            <p>Stats functionality will be available once the connection is established.</p>
+        </div>
+        
+        <!-- Settings Tab -->
+        <div id="settings-tab" class="tab-content">
+            <p>Settings functionality will be available once the connection is established.</p>
+        </div>
+    </main>
+    
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="switchTab('home')">
+            <div class="nav-icon">🏠</div>
+            <div class="nav-label">Home</div>
+        </button>
+        <button class="nav-item" onclick="switchTab('stats')">
+            <div class="nav-icon">📊</div>
+            <div class="nav-label">Stats</div>
+        </button>
+        <button class="nav-item" onclick="switchTab('settings')">
+            <div class="nav-icon">⚙️</div>
+            <div class="nav-label">Settings</div>
+        </button>
+    </nav>
+    
+    <!-- Inline JavaScript for Debug -->
+    <script>
+        // Debug logging
+        function log(message, type = 'info') {
+            console.log(`[DEBUG] ${message}`);
+            const debugStatus = document.getElementById('debug-status');
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            debugStatus.appendChild(statusDiv);
+        }
+        
+        // Tab Management
+        function switchTab(tabName) {
+            log(`Switching to ${tabName} tab`);
+            
+            // Update navigation
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+        
+        // API Test Functions
+        async function testAPI(endpoint, description) {
+            log(`Testing ${description}...`, 'loading');
+            try {
+                const response = await fetch(endpoint);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const data = await response.json();
+                log(`✅ ${description} - Success`, 'success');
+                return { success: true, data };
+            } catch (error) {
+                log(`❌ ${description} - Error: ${error.message}`, 'error');
+                return { success: false, error: error.message };
+            }
+        }
+        
+        // Main initialization
+        async function initializeApp() {
+            log('Starting app initialization...');
+            
+            const apiTests = document.getElementById('api-tests');
+            apiTests.innerHTML = '<h4>API Tests:</h4>';
+            
+            // Test 1: Initialize endpoint
+            const initTest = await testAPI('/api/initialize', 'Initialize API');
+            if (initTest.success) {
+                log(`Current gameweek: ${initTest.data.current_gameweek}`);
+                log(`Total gameweeks: ${initTest.data.total_gameweeks}`);
+            }
+            
+            // Test 2: Available stats endpoint
+            const statsTest = await testAPI('/api/available_stats', 'Available Stats API');
+            if (statsTest.success) {
+                log(`Found ${statsTest.data.stats.length} stat types`);
+            }
+            
+            // Test 3: Check if external API is accessible
+            try {
+                log('Testing FPL API connectivity...', 'loading');
+                const fplResponse = await fetch('/api/initialize');
+                if (fplResponse.ok) {
+                    log('✅ FPL API connection - Success', 'success');
+                } else {
+                    log('❌ FPL API connection - Failed', 'error');
+                }
+            } catch (error) {
+                log(`❌ FPL API connection - Error: ${error.message}`, 'error');
+            }
+            
+            // Final status
+            if (initTest.success && statsTest.success) {
+                log('🎉 App initialization completed successfully!', 'success');
+                // Remove error message if it exists
+                const errorMsg = document.querySelector('.error-message');
+                if (errorMsg) {
+                    errorMsg.remove();
+                }
+            } else {
+                log('⚠️ App initialization completed with errors', 'error');
+            }
+        }
+        
+        // Error handler for uncaught errors
+        window.onerror = function(message, source, lineno, colno, error) {
+            log(`JavaScript Error: ${message} at ${source}:${lineno}`, 'error');
+            return false;
+        };
+        
+        // Promise rejection handler
+        window.addEventListener('unhandledrejection', function(event) {
+            log(`Unhandled Promise Rejection: ${event.reason}`, 'error');
+        });
+        
+        // Start when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            log('DOM loaded, starting initialization...');
+            initializeApp();
+        });
+        
+        // Test button for manual testing
+        function manualTest() {
+            log('Manual test initiated...');
+            initializeApp();
+        }
+    </script>
+</body>
+</html>
