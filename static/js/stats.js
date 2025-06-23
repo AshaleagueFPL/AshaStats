@@ -58,10 +58,10 @@ function createStatsCards() {
         card.innerHTML = `
             <div class="stat-header" onclick="toggleStatCard('${stat.id}')">
                 <div class="stat-header-left">
-                    <span class="stat-icon">${stat.icon}</span>
+                    <span class="stat-icon"><i class="${stat.icon}"></i></span>
                     <span class="stat-title">${stat.name}</span>
                 </div>
-                <span class="expand-icon">▼</span>
+                <span class="expand-icon"><i class="fas fa-chevron-down"></i></span>
             </div>
             <div class="stat-content" id="stat-${stat.id}">
                 <div class="stat-placeholder">Click to expand and load ${stat.name.toLowerCase()} data</div>
@@ -177,33 +177,34 @@ function formatStatData(data, statType) {
 
 function formatOwnershipData(data) {
     if (!data.data || data.data.length === 0) {
-        return '<p>No ownership data available</p>';
+        return '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">No ownership data available</p>';
     }
     
-    let html = `<div style="margin-bottom: 1rem; padding: 0.75rem; background: var(--pl-purple); color: white; border-radius: 8px; text-align: center;">
-        <strong>GW${data.gameweek} Effective Ownership</strong><br>
-        <small>Top ${data.data.length} most owned players</small>
+    let html = `<div style="margin-bottom: 1rem; padding: 1rem; background: var(--pl-purple); color: var(--pl-white); border-radius: 8px; text-align: center; font-weight: 600;">
+        <strong style="font-size: 1.1rem;">GW${data.gameweek} Effective Ownership</strong><br>
+        <small style="opacity: 0.9;">Top ${data.data.length} most owned players</small>
     </div>`;
     
     data.data.forEach((player, index) => {
         const isHighOwnership = player.ownership > 50;
-        const bgColor = isHighOwnership ? 'var(--pl-green)' : 'var(--bg-secondary)';
-        const textColor = isHighOwnership ? 'var(--pl-purple)' : 'var(--text-primary)';
+        const bgColor = isHighOwnership ? 'var(--success-bg)' : 'var(--bg-secondary)';
+        const textColor = isHighOwnership ? 'var(--success-text)' : 'var(--text-primary)';
+        const borderColor = isHighOwnership ? 'var(--success-border)' : 'var(--border)';
         
         html += `
-            <div style="margin-bottom: 0.75rem; padding: 0.75rem; background: ${bgColor}; color: ${textColor}; border-radius: 8px; border: 1px solid var(--border);">
+            <div style="margin-bottom: 0.75rem; padding: 1rem; background: ${bgColor}; color: ${textColor}; border-radius: 8px; border: 2px solid ${borderColor};">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <strong style="font-size: 1.1rem;">${player.player}</strong>
-                    <span style="background: ${isHighOwnership ? 'rgba(56, 0, 60, 0.2)' : 'var(--pl-purple)'}; color: ${isHighOwnership ? 'var(--pl-purple)' : 'white'}; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">
+                    <strong style="font-size: 1.1rem; font-weight: 700;">${player.player}</strong>
+                    <span style="background: var(--pl-purple); color: var(--pl-white); padding: 0.4rem 0.8rem; border-radius: 12px; font-size: 0.85rem; font-weight: 700;">
                         ${player.ownership}% EO
                     </span>
                 </div>
-                <div style="font-size: 0.9rem; opacity: 0.9;">
+                <div style="font-size: 0.9rem; font-weight: 500;">
                     ${player.teams.length === data.total_teams ? 
-                        '🔥 <strong>ALL TEAMS</strong>' : 
-                        `Teams: ${player.teams.join(', ')}`
+                        '<i class="fas fa-fire" style="color: #ff6b35;"></i> <strong>ALL TEAMS</strong>' : 
+                        `<strong>Teams:</strong> ${player.teams.join(', ')}`
                     }
-                    ${player.captains.length > 0 ? `<br>⚡ Captains: ${player.captains.join(', ')}` : ''}
+                    ${player.captains.length > 0 ? `<br><i class="fas fa-bolt" style="color: var(--pl-green);"></i> <strong>Captains:</strong> ${player.captains.join(', ')}` : ''}
                 </div>
             </div>
         `;
@@ -214,32 +215,33 @@ function formatOwnershipData(data) {
 
 function formatCaptaincyData(data) {
     if (!data.data || data.data.length === 0) {
-        return '<p>No captaincy data available for this gameweek</p>';
+        return '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">No captaincy data available for this gameweek</p>';
     }
     
-    let html = `<div style="margin-bottom: 1rem; padding: 0.75rem; background: var(--pl-purple); color: white; border-radius: 8px; text-align: center;">
-        <strong>GW${data.gameweek} Captaincy Summary</strong><br>
-        <small>${data.total_teams} teams in league</small>
+    let html = `<div style="margin-bottom: 1rem; padding: 1rem; background: var(--pl-purple); color: var(--pl-white); border-radius: 8px; text-align: center; font-weight: 600;">
+        <strong style="font-size: 1.1rem;">GW${data.gameweek} Captaincy Summary</strong><br>
+        <small style="opacity: 0.9;">${data.total_teams} teams in league</small>
     </div>`;
     
     data.data.forEach((captain, index) => {
         const percentage = ((captain.count / data.total_teams) * 100).toFixed(1);
-        const isPopular = captain.count > data.total_teams / 2;
-        const bgColor = isPopular ? 'var(--pl-green)' : 'var(--bg-secondary)';
-        const textColor = isPopular ? 'var(--pl-purple)' : 'var(--text-primary)';
+        const isPopular = captain.count > data.total_teams / 3;
+        const bgColor = isPopular ? 'var(--success-bg)' : 'var(--bg-secondary)';
+        const textColor = isPopular ? 'var(--success-text)' : 'var(--text-primary)';
+        const borderColor = isPopular ? 'var(--success-border)' : 'var(--border)';
         
         html += `
-            <div style="margin-bottom: 0.75rem; padding: 0.75rem; background: ${bgColor}; color: ${textColor}; border-radius: 8px; border: 1px solid var(--border);">
+            <div style="margin-bottom: 0.75rem; padding: 1rem; background: ${bgColor}; color: ${textColor}; border-radius: 8px; border: 2px solid ${borderColor};">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <strong style="font-size: 1.1rem;">${captain.player}</strong>
-                    <span style="background: ${isPopular ? 'rgba(56, 0, 60, 0.2)' : 'var(--pl-purple)'}; color: ${isPopular ? 'var(--pl-purple)' : 'white'}; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">
+                    <strong style="font-size: 1.1rem; font-weight: 700;">${captain.player}</strong>
+                    <span style="background: var(--pl-purple); color: var(--pl-white); padding: 0.4rem 0.8rem; border-radius: 12px; font-size: 0.85rem; font-weight: 700;">
                         ${captain.count}/${data.total_teams} (${percentage}%)
                     </span>
                 </div>
-                <div style="font-size: 0.9rem; opacity: 0.9;">
+                <div style="font-size: 0.9rem; font-weight: 500;">
                     ${captain.count === data.total_teams ? 
-                        '🔥 <strong>ALL TEAMS</strong>' : 
-                        captain.teams.join(', ')
+                        '<i class="fas fa-fire" style="color: #ff6b35;"></i> <strong>ALL TEAMS</strong>' : 
+                        `<strong>Teams:</strong> ${captain.teams.join(', ')}`
                     }
                 </div>
             </div>
@@ -253,7 +255,7 @@ function formatTransferData(data) {
     let html = '<div>';
     
     if (data.transfers_in && data.transfers_in.length > 0) {
-        html += '<h4 style="color: var(--pl-green); margin-bottom: 0.5rem;">⬆️ Transfers In</h4>';
+        html += '<h4 style="color: var(--pl-green); margin-bottom: 0.5rem;"><i class="fas fa-arrow-up"></i> Transfers In</h4>';
         data.transfers_in.forEach(transfer => {
             html += `
                 <div style="margin-bottom: 0.5rem; padding: 0.5rem; background: var(--bg-secondary); border-radius: 6px;">
@@ -265,7 +267,7 @@ function formatTransferData(data) {
     }
     
     if (data.transfers_out && data.transfers_out.length > 0) {
-        html += '<h4 style="color: #ff4757; margin: 1rem 0 0.5rem 0;">⬇️ Transfers Out</h4>';
+        html += '<h4 style="color: #ff4757; margin: 1rem 0 0.5rem 0;"><i class="fas fa-arrow-down"></i> Transfers Out</h4>';
         data.transfers_out.forEach(transfer => {
             html += `
                 <div style="margin-bottom: 0.5rem; padding: 0.5rem; background: var(--bg-secondary); border-radius: 6px;">
@@ -280,29 +282,36 @@ function formatTransferData(data) {
     return html || '<p>No transfer data available</p>';
 }
 
+
 function formatRankingsData(data) {
     if (!data.data || data.data.length === 0) {
-        return '<p>No rankings data available</p>';
+        return '<p style="color: var(--text-secondary); text-align: center; padding: 2rem;">No rankings data available</p>';
     }
     
-    let html = `<div style="margin-bottom: 1rem; padding: 0.75rem; background: var(--pl-purple); color: white; border-radius: 8px; text-align: center;">
-        <strong>GW${data.gameweek} Manager Rankings</strong><br>
-        <small>${data.total_teams} teams</small>
+    let html = `<div style="margin-bottom: 1rem; padding: 1rem; background: var(--pl-purple); color: var(--pl-white); border-radius: 8px; text-align: center; font-weight: 600;">
+        <strong style="font-size: 1.1rem;">GW${data.gameweek} Manager Rankings</strong><br>
+        <small style="opacity: 0.9;">${data.total_teams} teams</small>
     </div>`;
     
     data.data.forEach((manager, index) => {
-        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+        let medal;
+        if (index === 0) medal = '<i class="fas fa-medal" style="color: #ffd700;"></i>';
+        else if (index === 1) medal = '<i class="fas fa-medal" style="color: #c0c0c0;"></i>';
+        else if (index === 2) medal = '<i class="fas fa-medal" style="color: #cd7f32;"></i>';
+        else medal = `<span style="font-weight: 700; color: var(--text-primary);">${index + 1}.</span>`;
+        
         const isTopThree = index < 3;
-        const bgColor = isTopThree ? 'var(--pl-green)' : 'var(--bg-secondary)';
-        const textColor = isTopThree ? 'var(--pl-purple)' : 'var(--text-primary)';
+        const bgColor = isTopThree ? 'var(--success-bg)' : 'var(--bg-secondary)';
+        const textColor = isTopThree ? 'var(--success-text)' : 'var(--text-primary)';
+        const borderColor = isTopThree ? 'var(--success-border)' : 'var(--border)';
         
         html += `
-            <div style="margin-bottom: 0.5rem; padding: 0.75rem; background: ${bgColor}; color: ${textColor}; border-radius: 8px; border: 1px solid var(--border);">
+            <div style="margin-bottom: 0.5rem; padding: 1rem; background: ${bgColor}; color: ${textColor}; border-radius: 8px; border: 2px solid ${borderColor};">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span><strong>${medal} ${manager.manager}</strong></span>
-                    <span style="font-weight: bold;">${manager.points} pts</span>
+                    <span style="font-weight: 700;">${medal} ${manager.manager}</span>
+                    <span style="font-weight: 700; font-size: 1.1rem;">${manager.points} pts</span>
                 </div>
-                ${manager.transfer_cost > 0 ? `<div style="font-size: 0.9rem; opacity: 0.8;">Net: ${manager.net_points} (${manager.transfer_cost} hit)</div>` : ''}
+                ${manager.transfer_cost > 0 ? `<div style="font-size: 0.9rem; font-weight: 500; margin-top: 0.25rem;">Net: ${manager.net_points} (${manager.transfer_cost} hit)</div>` : ''}
             </div>
         `;
     });

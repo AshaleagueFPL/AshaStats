@@ -1,7 +1,7 @@
 // FPL League Analyzer - Service Worker
-// Version 1.0.0
+// Version 1.0.1
 
-const CACHE_NAME = 'fpl-analyzer-v1.0.0';
+const CACHE_NAME = 'fpl-analyzer-v1.0.1';
 const urlsToCache = [
   '/',
   '/static/css/styles.css',
@@ -9,7 +9,9 @@ const urlsToCache = [
   '/static/js/app.js',
   '/static/js/stats.js',
   '/static/js/settings.js',
-  '/manifest.json'
+  '/static/manifest.json', // Updated path
+  '/static/assets/app-icon-192.png',
+  '/static/assets/app-icon-512.png'
 ];
 
 // Install event - cache resources
@@ -85,9 +87,10 @@ self.addEventListener('fetch', function(event) {
           // Add to cache for future use
           caches.open(CACHE_NAME)
             .then(function(cache) {
-              // Only cache static assets and main page
+              // Cache static assets, main page, and manifest
               if (event.request.url.includes('/static/') || 
-                  event.request.url === self.location.origin + '/') {
+                  event.request.url === self.location.origin + '/' ||
+                  event.request.url.includes('manifest.json')) {
                 cache.put(event.request, responseToCache);
                 console.log('Service Worker: Cached new resource', event.request.url);
               }
@@ -121,8 +124,8 @@ self.addEventListener('push', function(event) {
   
   const options = {
     body: event.data ? event.data.text() : 'FPL League Analyzer notification',
-    icon: '/static/icons/icon-192.png',
-    badge: '/static/icons/icon-192.png',
+    icon: '/static/assets/app-icon-192.png',
+    badge: '/static/assets/app-icon-192.png',
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),

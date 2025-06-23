@@ -1,32 +1,65 @@
 :root {
     /* Premier League Colors */
     --pl-purple: #38003c;
-    --pl-green: #00ff85;
+    --pl-green: #00bb61;
     --pl-white: #ffffff;
     --pl-light-purple: #4a0e4e;
-    --pl-dark-green: #00cc6a;
+    --pl-dark-green: #008947;
     
-    /* Light Theme */
-    --bg-primary: var(--pl-white);
-    --bg-secondary: #f8f9fa;
-    --bg-card: var(--pl-white);
-    --text-primary: var(--pl-purple);
-    --text-secondary: #666;
-    --border: #e0e0e0;
-    --shadow: rgba(56, 0, 60, 0.1);
+    /* Light Theme - Improved Contrast */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f7fa;
+    --bg-card: #ffffff;
+    --text-primary: #1a1a1a;
+    --text-secondary: #4a5568;
+    --text-muted: #718096;
+    --border: #d1d5db;
+    --border-light: #e5e7eb;
+    --shadow: rgba(0, 0, 0, 0.1);
+    --shadow-hover: rgba(0, 0, 0, 0.15);
+    
+    /* Interactive Colors */
+    --success-bg: #d4edda;
+    --success-text: #155724;
+    --success-border: #c3e6cb;
+    --error-bg: #f8d7da;
+    --error-text: #721c24;
+    --error-border: #f5c6cb;
+    --warning-bg: #fff3cd;
+    --warning-text: #856404;
+    --warning-border: #ffeaa7;
 }
 
 [data-theme="dark"] {
-    /* Dark Theme */
-    --bg-primary: #1a1a1a;
-    --bg-secondary: #2d2d2d;
-    --bg-card: #333;
-    --text-primary: var(--pl-white);
-    --text-secondary: #ccc;
-    --border: #555;
-    --shadow: rgba(0, 0, 0, 0.3);
+    /* Dark Theme - Improved Contrast */
+    --bg-primary: #0f1419;
+    --bg-secondary: #1a202c;
+    --bg-card: #2d3748;
+    --text-primary: #f7fafc;
+    --text-secondary: #cbd5e0;
+    --text-muted: #a0aec0;
+    --border: #4a5568;
+    --border-light: #2d3748;
+    --shadow: rgba(0, 0, 0, 0.4);
+    --shadow-hover: rgba(0, 0, 0, 0.6);
+    
+    /* Interactive Colors for Dark Mode */
+    --success-bg: #22543d;
+    --success-text: #9ae6b4;
+    --success-border: #38a169;
+    --error-bg: #742a2a;
+    --error-text: #fed7d7;
+    --error-border: #e53e3e;
+    --warning-bg: #744210;
+    --warning-text: #faf089;
+    --warning-border: #d69e2e;
+    
+    /* Adjust PL colors for dark mode */
+    --pl-green: #00ff85;
+    --pl-dark-green: #00e676;
 }
 
+/* Base Styles */
 * {
     margin: 0;
     padding: 0;
@@ -38,7 +71,8 @@ body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
     overflow-x: hidden;
-    padding-bottom: 80px; /* Space for bottom nav */
+    padding-bottom: 80px;
+    line-height: 1.6;
 }
 
 /* Header */
@@ -56,6 +90,7 @@ body {
     text-align: center;
     font-size: 1.5rem;
     font-weight: 600;
+    color: var(--pl-white);
 }
 
 /* Main Content */
@@ -63,6 +98,7 @@ body {
     padding: 1rem;
     min-height: calc(100vh - 160px);
 }
+
 
 /* Tab Content */
 .tab-content {
@@ -80,19 +116,21 @@ body {
     padding: 2rem;
     text-align: center;
     box-shadow: 0 2px 8px var(--shadow);
-    border: 1px solid var(--border);
+    border: 2px solid var(--border);
     margin-bottom: 2rem;
 }
 
 .welcome-section h2 {
-    color: var(--pl-purple);
+    color: var(--text-primary);
     margin-bottom: 1rem;
     font-size: 2rem;
+    font-weight: 700;
 }
 
 .welcome-section p {
     color: var(--text-secondary);
     font-size: 1.1rem;
+    font-weight: 500;
 }
 
 /* Bottom Navigation */
@@ -102,7 +140,7 @@ body {
     left: 0;
     right: 0;
     background: var(--bg-card);
-    border-top: 1px solid var(--border);
+    border-top: 2px solid var(--border);
     display: flex;
     box-shadow: 0 -2px 10px var(--shadow);
 }
@@ -112,19 +150,22 @@ body {
     padding: 1rem;
     text-align: center;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s ease;
     border: none;
     background: none;
-    color: var(--text-secondary);
+    color: var(--text-muted);
+    font-weight: 500;
 }
 
 .nav-item.active {
     color: var(--pl-green);
     background: var(--bg-secondary);
+    font-weight: 600;
 }
 
 .nav-item:hover {
     background: var(--bg-secondary);
+    color: var(--text-primary);
 }
 
 .nav-icon {
@@ -134,7 +175,7 @@ body {
 
 .nav-label {
     font-size: 0.8rem;
-    font-weight: 500;
+    font-weight: inherit;
 }
 
 /* Loading and Error States */
@@ -153,21 +194,36 @@ body {
 }
 
 .error-message {
-    background: #fee;
-    color: #c33;
+    background: var(--error-bg);
+    color: var(--error-text);
     padding: 1rem;
     border-radius: 8px;
     margin: 1rem 0;
-    border: 1px solid #fcc;
+    border: 1px solid var(--error-border);
+    font-weight: 500;
 }
 
 .success-message {
-    background: #efe;
-    color: #363;
+    background: var(--success-bg);
+    color: var(--success-text);
     padding: 1rem;
     border-radius: 8px;
     margin: 1rem 0;
-    border: 1px solid #cfc;
+    border: 1px solid var(--success-border);
+    font-weight: 500;
+}
+
+/* Text Utilities */
+.text-primary {
+    color: var(--text-primary) !important;
+}
+
+.text-secondary {
+    color: var(--text-secondary) !important;
+}
+
+.text-muted {
+    color: var(--text-muted) !important;
 }
 
 /* Responsive Design */
@@ -187,4 +243,61 @@ body {
     .welcome-section p {
         font-size: 1rem;
     }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    :root {
+        --border: #000000;
+        --text-secondary: #000000;
+    }
+    
+    [data-theme="dark"] {
+        --border: #ffffff;
+        --text-secondary: #ffffff;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Stats Grid */
+.stat-icon i {
+    font-size: 1.2rem;
+    width: 1.5rem;
+    text-align: center;
+}
+
+.nav-icon i {
+    font-size: 1.3rem;
+}
+
+.expand-icon i {
+    transition: transform 0.3s ease;
+}
+
+.stat-card.expanded .expand-icon i {
+    transform: rotate(180deg);
+}
+
+/* Icon colors */
+.fas {
+    color: inherit;
+}
+
+/* Header icon */
+.header h1 i {
+    margin-right: 0.5rem;
+}
+
+/* Settings section icons */
+.settings-section h3 i {
+    margin-right: 0.5rem;
+    color: var(--pl-green);
 }

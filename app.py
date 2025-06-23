@@ -22,6 +22,11 @@ def initialize():
         })
     return jsonify({"success": False, "error": "Failed to load FPL data"})
 
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    """Serve static files"""
+    return send_from_directory('static', filename)
+
 @app.route('/api/set_league', methods=['POST'])
 def set_league():
     """Set league ID"""
@@ -51,39 +56,40 @@ def available_stats():
     """Get list of available stat types"""
     return jsonify({
         "stats": [
-            {"id": "ownership", "name": "Effective Ownership", "icon": "👥"},
-            {"id": "captaincy", "name": "Captaincy Analysis", "icon": "⚡"},
-            {"id": "transfers", "name": "Transfer Summary", "icon": "🔄"},
-            {"id": "rankings", "name": "Manager Rankings", "icon": "🏆"},
-            {"id": "unique", "name": "Unique Players", "icon": "⭐"},
-            {"id": "representation", "name": "Team Representation", "icon": "🏟️"}
+            {"id": "ownership", "name": "Effective Ownership", "icon": "fas fa-users"},
+            {"id": "captaincy", "name": "Captaincy Analysis", "icon": "fas fa-bolt"},
+            {"id": "transfers", "name": "Transfer Summary", "icon": "fas fa-exchange-alt"},
+            {"id": "rankings", "name": "Manager Rankings", "icon": "fas fa-trophy"},
+            {"id": "unique", "name": "Unique Players", "icon": "fas fa-star"},
+            {"id": "representation", "name": "Team Representation", "icon": "fas fa-building"}
         ]
     })
 
-@app.route('/manifest.json')
-def manifest():
-    """PWA manifest"""
-    return jsonify({
-        "name": "FPL League Analyzer",
-        "short_name": "FPL Stats",
-        "description": "Fantasy Premier League statistics for your mini-league",
-        "start_url": "/",
-        "display": "standalone",
-        "background_color": "#38003c",
-        "theme_color": "#00ff85",
-        "icons": [
-            {
-                "src": "/static/icon-192.png",
-                "sizes": "192x192",
-                "type": "image/png"
-            },
-            {
-                "src": "/static/icon-512.png",
-                "sizes": "512x512",
-                "type": "image/png"
-            }
-        ]
-    })
+
+# @app.route('/manifest.json')
+# def manifest():
+#     """PWA manifest"""
+#     return jsonify({
+#         "name": "FPL League Analyzer",
+#         "short_name": "FPL Stats",
+#         "description": "Fantasy Premier League statistics for your mini-league",
+#         "start_url": "/",
+#         "display": "standalone",
+#         "background_color": "#38003c",
+#         "theme_color": "#00ff85",
+#         "icons": [
+#             {
+#                 "src": "/static/assets/icon-192.png",
+#                 "sizes": "192x192",
+#                 "type": "image/png"
+#             },
+#             {
+#                 "src": "/static/assets/icon-512.png",
+#                 "sizes": "512x512",
+#                 "type": "image/png"
+#             }
+#         ]
+#     })
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5050)

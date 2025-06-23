@@ -6,29 +6,41 @@
     <meta name="theme-color" content="#38003c">
     <title>FPL League Analyzer</title>
     
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json">
+    <!-- PWA Manifest - Updated path -->
+    <link rel="manifest" href="/static/manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="FPL Stats">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="152x152" href="/static/assets/app-icon-152.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="/static/assets/app-icon-192.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/assets/app-icon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/assets/app-icon-16.png">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Styles -->
     <link rel="stylesheet" href="/static/css/styles.css">
     <link rel="stylesheet" href="/static/css/components.css">
 </head>
+    
 <body data-theme="light">
     <!-- Header -->
     <header class="header">
-        <h1>🏆 FPL League Analyzer</h1>
-    </header>
+        <h1><i class="fas fa-trophy"></i> FPL League Analyzer</h1>
+    </header>    
     
     <!-- Main Content -->
     <main class="main-content">
         <!-- Home Tab -->
         <div id="home-tab" class="tab-content active">
             <div class="welcome-section">
-                <h2>Hello and Welcome to the app!</h2>
-                <p>Your Fantasy Premier League mini-league analysis tool.</p>
+                <h2>Welcome to AshaStats!</h2>
+                <p>Your FPL mini-league stats tool.</p>
             </div>
         </div>
         
@@ -36,13 +48,18 @@
         <div id="stats-tab" class="tab-content">
             <!-- Gameweek Selector -->
             <div class="gameweek-selector">
-                <h3>📅 Select Gameweek</h3>
+                <h3><i class="fas fa-calendar-alt"></i> Select Gameweek</h3>
                 <div class="gw-controls">
-                    <button class="gw-btn" id="prev-gw" onclick="changeGameweek(-1)">← Previous</button>
+                    <button class="gw-btn" id="prev-gw" onclick="changeGameweek(-1)">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </button>
                     <div class="gw-display" id="current-gw">GW 1</div>
-                    <button class="gw-btn" id="next-gw" onclick="changeGameweek(1)">Next →</button>
+                    <button class="gw-btn" id="next-gw" onclick="changeGameweek(1)">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </button>
                 </div>
             </div>
+            
             
             <!-- Stats Grid -->
             <div class="stats-grid" id="stats-grid">
@@ -54,7 +71,7 @@
         <div id="settings-tab" class="tab-content">
             <!-- League Configuration -->
             <div class="settings-section">
-                <h3>⚽ League Configuration</h3>
+                <h3><i class="fas fa-futbol"></i> League Configuration</h3>
                 <div class="form-group">
                     <label for="league-id">League ID</label>
                     <input type="text" id="league-id" class="form-input" placeholder="Enter your FPL League ID">
@@ -63,9 +80,8 @@
                 <div id="league-status"></div>
             </div>
             
-            <!-- Theme Settings -->
             <div class="settings-section">
-                <h3>🎨 Appearance</h3>
+                <h3><i class="fas fa-palette"></i> Appearance</h3>
                 <div class="form-group">
                     <label for="dark-mode">Dark Mode</label>
                     <label class="toggle-switch">
@@ -75,32 +91,31 @@
                 </div>
             </div>
             
-            <!-- App Info -->
             <div class="settings-section">
-                <h3>ℹ️ App Information</h3>
+                <h3><i class="fas fa-info-circle"></i> App Information</h3>
                 <p><strong>Version:</strong> 1.0.0</p>
                 <p><strong>Current Gameweek:</strong> <span id="info-current-gw">-</span></p>
                 <p><strong>League Teams:</strong> <span id="info-team-count">-</span></p>
                 <button class="btn-primary" onclick="refreshData()">Refresh Data</button>
-            </div>
+            </div>            
         </div>
     </main>
     
     <!-- Bottom Navigation -->
     <nav class="bottom-nav">
         <button class="nav-item active" onclick="switchTab('home')">
-            <div class="nav-icon">🏠</div>
+            <div class="nav-icon"><i class="fas fa-home"></i></div>
             <div class="nav-label">Home</div>
         </button>
         <button class="nav-item" onclick="switchTab('stats')">
-            <div class="nav-icon">📊</div>
+            <div class="nav-icon"><i class="fas fa-chart-bar"></i></div>
             <div class="nav-label">Stats</div>
         </button>
         <button class="nav-item" onclick="switchTab('settings')">
-            <div class="nav-icon">⚙️</div>
+            <div class="nav-icon"><i class="fas fa-cog"></i></div>
             <div class="nav-label">Settings</div>
         </button>
-    </nav>
+    </nav>    
     
     <!-- JavaScript - Load in correct order -->
     <script src="/static/js/app.js"></script>
