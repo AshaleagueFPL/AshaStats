@@ -1,4 +1,4 @@
-# FPL League Analyzer
+# AshaStats
 
 A web application for analyzing Fantasy Premier League (FPL) mini-leagues, providing detailed statistics and insights about player ownership, captaincy choices, transfers, and more.
 

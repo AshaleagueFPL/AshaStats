@@ -1,4 +1,4 @@
-// FPL League Analyzer - Service Worker
+// AshaStats - Service Worker
 // Version 1.0.1
 
 const CACHE_NAME = 'fpl-analyzer-v1.0.1';

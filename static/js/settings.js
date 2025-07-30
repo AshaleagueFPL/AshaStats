@@ -35,7 +35,7 @@ async function loadLeague(leagueId) {
         
         if (data.success) {
             localStorage.setItem('leagueId', leagueId);
-            statusDiv.innerHTML = `<div class="success-message">✅ League loaded! ${data.team_count} teams found.</div>`;
+            statusDiv.innerHTML = `<div class="success-message">✅ League "${data.league_name}" loaded! ${data.team_count} teams found.</div>`;
             window.AppState.isDataLoaded = true;
             
             // Load stats for current gameweek if on stats tab
@@ -44,6 +44,12 @@ async function loadLeague(leagueId) {
                 if (typeof loadStatsForGameweek === 'function') {
                     await loadStatsForGameweek(window.AppState.currentGameweek);
                 }
+            }
+            
+            // Load live table if on home tab or force load it
+            if (typeof loadLiveTable === 'function') {
+                console.log('Triggering live table reload after league load');
+                await loadLiveTable();
             }
             
             if (typeof updateAppInfo === 'function') {

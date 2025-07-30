@@ -26,21 +26,299 @@
     <!-- Styles -->
     <link rel="stylesheet" href="/static/css/styles.css">
     <link rel="stylesheet" href="/static/css/components.css">
+    
+    <style>
+        /* Live Table Styles - Inline for immediate loading */
+        .live-table {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 2px 8px var(--shadow);
+            border: 2px solid var(--border);
+            margin-bottom: 1rem;
+        }
+
+        .live-table-header {
+            text-align: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .live-table-header h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .live-table-header h3 i {
+            color: var(--pl-green);
+            margin-right: 0.5rem;
+        }
+
+        .live-table-header p {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        .live-table-grid {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .live-table-grid th {
+            background: var(--pl-purple);
+            color: var(--pl-white);
+            padding: 0.75rem 0.5rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .live-table-grid th:first-child {
+            border-radius: 8px 0 0 8px;
+            text-align: center;
+        }
+
+        .live-table-grid th:last-child {
+            border-radius: 0 8px 8px 0;
+            text-align: center;
+        }
+
+        .live-table-grid td {
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .live-table-grid tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        .live-table-grid tr.top-three {
+            background: var(--success-bg);
+            color: var(--success-text);
+        }
+
+        .position {
+            text-align: center;
+            font-weight: 700;
+            width: 60px;
+        }
+
+        .team-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            min-width: 120px;
+        }
+
+        .manager-name {
+            color: var(--text-secondary);
+            font-weight: 500;
+            min-width: 120px;
+        }
+
+        .total-points {
+            text-align: center;
+            font-weight: 700;
+            color: var(--pl-purple);
+            width: 80px;
+        }
+
+        .gw-points {
+            text-align: center;
+            font-weight: 600;
+            color: var(--pl-green);
+            width: 80px;
+        }
+
+        /* Teams List (Pre-season) */
+        .teams-list {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 2px 8px var(--shadow);
+            border: 2px solid var(--border);
+            margin-bottom: 1rem;
+        }
+
+        .teams-list-header {
+            text-align: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .teams-list-header h3 {
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .teams-list-header h3 i {
+            color: var(--pl-green);
+            margin-right: 0.5rem;
+        }
+
+        .teams-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .team-card {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px var(--shadow);
+        }
+
+        .team-card:hover {
+            border-color: var(--pl-green);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-hover);
+        }
+
+        .team-info {
+            text-align: center;
+        }
+
+        .team-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+        }
+
+        .team-info .team-manager-name {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            display: block !important;
+            margin-top: 0.25rem;
+        }
+
+        .teams-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .teams-section h4 {
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .teams-section h4 i {
+            color: var(--pl-green);
+            margin-right: 0.5rem;
+        }
+
+        .team-card.pending {
+            border-color: var(--warning-border);
+            background: var(--warning-bg);
+        }
+
+        .team-card.pending .team-info strong {
+            color: var(--warning-text);
+        }
+
+        .pending-label {
+            font-size: 0.8rem;
+            color: var(--warning-text);
+            font-style: italic;
+            background: rgba(255, 193, 7, 0.2);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--warning-border);
+        }
+
+        .team-card.active {
+            border-color: var(--success-border);
+        }
+
+        .team-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: var(--bg-primary);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .no-teams {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .no-teams i {
+            color: var(--warning-text);
+            margin-right: 0.5rem;
+        }
+
+        .pre-season-note {
+            background: var(--warning-bg);
+            color: var(--warning-text);
+            border: 1px solid var(--warning-border);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .live-table-placeholder {
+            background: var(--bg-secondary);
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .live-table-grid .manager-name { display: none; }
+            .teams-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
     
 <body data-theme="light">
     <!-- Header -->
     <header class="header">
-        <h1><i class="fas fa-trophy"></i> FPL League Analyzer</h1>
+        <h1><i class="fas fa-trophy"></i> AshaStats</h1>
     </header>    
     
     <!-- Main Content -->
     <main class="main-content">
         <!-- Home Tab -->
         <div id="home-tab" class="tab-content active">
-            <div class="welcome-section">
+            <!-- <div class="welcome-section">
                 <h2>Welcome to AshaStats!</h2>
                 <p>Your FPL mini-league stats tool.</p>
+            </div> -->
+            
+            <!-- Live Table Container -->
+            <div id="live-table-container">
+                <div class="live-table-placeholder">
+                    <p><i class="fas fa-cog"></i> Configure your league in Settings to view the live table</p>
+                </div>
             </div>
         </div>
         
