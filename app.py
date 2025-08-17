@@ -353,5 +353,37 @@ def available_stats():
         ]
     })
 
+@app.route('/search')
+def search_page():
+    """Search page"""
+    return render_template('search.html')
+
+@app.route('/api/search_players')
+def search_players():
+    """Search for players by name"""
+    search_term = request.args.get('q', '').strip()
+    limit = request.args.get('limit', 10, type=int)
+    
+    if not search_term:
+        return jsonify({"error": "Search term required"})
+    
+    if not analyzer.gdata:
+        return jsonify({"error": "FPL data not loaded"})
+    
+    results = analyzer.search_players(search_term, limit)
+    return jsonify(results)
+
+@app.route('/api/player_league_stats/<int:player_id>/<int:gameweek>')
+def get_player_league_stats(player_id, gameweek):
+    """Get player statistics within the league for a specific gameweek"""
+    if not analyzer.league_id or not analyzer.teams:
+        return jsonify({"error": "No league configured"})
+    
+    try:
+        stats = analyzer.get_player_league_stats(player_id, gameweek)
+        return jsonify(stats)
+    except Exception as e:
+        return jsonify({"error": f"Failed to get player stats: {str(e)}"})
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5050)

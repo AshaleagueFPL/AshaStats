@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#38003c">
+    <title>Player Search - AshaStats</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="FPL Stats">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="152x152" href="/static/assets/app-icon-152.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="/static/assets/app-icon-192.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/assets/app-icon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/assets/app-icon-16.png">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+</head>
+<body data-theme="light">
+    <!-- Header -->
+    <header class="header">
+        <h1><i class="fas fa-search"></i> Player Search</h1>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Search Section -->
+        <div class="search-section">
+            <h3><i class="fas fa-user-search"></i> Search Players</h3>
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    id="player-search" 
+                    placeholder="Search for a player (e.g., Salah, Haaland, Bruno...)"
+                    autocomplete="off"
+                >
+                
+                <!-- Search Suggestions -->
+                <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
+            </div>
+        </div>
+        
+        <!-- Gameweek Selector -->
+        <div id="gameweek-selector" class="gameweek-selector" style="display: none;">
+            <h3><i class="fas fa-calendar-alt"></i> Select Gameweek for League Stats</h3>
+            <div class="gw-controls">
+                <button class="gw-btn" id="prev-gw" onclick="changeGameweek(-1)">
+                    <i class="fas fa-chevron-left"></i> Prev
+                </button>
+                <div class="gw-display" id="current-gw">GW 1</div>
+                <button class="gw-btn" id="next-gw" onclick="changeGameweek(1)">
+                    Next <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Player Header -->
+        <div id="player-header" style="display: none;"></div>
+        
+        <!-- Stats Grid - Using same structure as stats.html -->
+        <div class="stats-grid" id="stats-grid" style="display: none;">
+            <!-- Stats cards will be dynamically loaded here -->
+        </div>
+    </main>
+    
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item" onclick="goToHomeTab()">
+            <div class="nav-icon"><i class="fas fa-home"></i></div>
+            <div class="nav-label">Home</div>
+        </button>
+        <button class="nav-item" onclick="goToStatsTab()">
+            <div class="nav-icon"><i class="fas fa-chart-bar"></i></div>
+            <div class="nav-label">Stats</div>
+        </button>
+        <button class="nav-item active">
+            <div class="nav-icon"><i class="fas fa-search"></i></div>
+            <div class="nav-label">Search</div>
+        </button>
+        <button class="nav-item" onclick="goToSettingsTab()">
+            <div class="nav-icon"><i class="fas fa-cog"></i></div>
+            <div class="nav-label">Settings</div>
+        </button>
+    </nav>
+    
+    <script>
+        // Global state
+        let currentGameweek = 1;
+        let maxGameweek = 38;
+        let selectedPlayer = null;
+        let searchTimeout = null;
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTheme();
+            initializeGameweek();
+            setupSearchInput();
+        });
+        
+        // Load theme from localStorage
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+        }
+        
+        // Initialize gameweek from main app
+        async function initializeGameweek() {
+            try {
+                const response = await fetch('/api/initialize');
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentGameweek = data.current_gameweek;
+                    maxGameweek = data.total_gameweeks;
+                    updateGameweekDisplay();
+                }
+            } catch (error) {
+                console.error('Failed to initialize gameweek:', error);
+            }
+        }
+        
+        // Setup search input with debounced search
+        function setupSearchInput() {
+            const searchInput = document.getElementById('player-search');
+            
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.trim();
+                
+                // Clear previous timeout
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+                
+                if (searchTerm.length < 2) {
+                    hideSuggestions();
+                    return;
+                }
+                
+                // Debounce search by 300ms
+                searchTimeout = setTimeout(() => {
+                    searchPlayers(searchTerm);
+                }, 300);
+            });
+            
+            // Hide suggestions when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('.search-section')) {
+                    hideSuggestions();
+                }
+            });
+        }
+        
+        // Search for players
+        async function searchPlayers(searchTerm) {
+            const suggestionsContainer = document.getElementById('search-suggestions');
+            
+            try {
+                suggestionsContainer.style.display = 'block';
+                suggestionsContainer.innerHTML = '<div class="loading-suggestions"><i class="fas fa-spinner fa-spin"></i> Searching players...</div>';
+                
+                const response = await fetch(`/api/search_players?q=${encodeURIComponent(searchTerm)}&limit=10`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    suggestionsContainer.innerHTML = `<div class="error-suggestions"><i class="fas fa-exclamation-triangle"></i> ${data.error}</div>`;
+                    return;
+                }
+                
+                if (data.players.length === 0) {
+                    suggestionsContainer.innerHTML = '<div class="no-data">No players found matching your search</div>';
+                    return;
+                }
+                
+                // Display suggestions
+                displaySuggestions(data.players);
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                suggestionsContainer.innerHTML = '<div class="error-suggestions"><i class="fas fa-exclamation-triangle"></i> Failed to search players</div>';
+            }
+        }
+        
+        // Display search suggestions
+        function displaySuggestions(players) {
+            const suggestionsContainer = document.getElementById('search-suggestions');
+            
+            let html = '';
+            players.forEach(player => {
+                const initials = player.web_name.substring(0, 2).toUpperCase();
+                
+                html += `
+                    <div class="suggestion-item" onclick="selectPlayer(${player.id}, '${player.web_name}', '${player.full_name}', '${player.team_name}', '${player.position_name}', ${player.now_cost})">
+                        <div class="player-avatar">${initials}</div>
+                        <div class="player-info">
+                            <div class="player-name">${player.full_name}</div>
+                            <div class="player-details">
+                                ${player.team_name} • ${player.position_name} • £${player.now_cost}m • ${player.total_points} pts
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            suggestionsContainer.innerHTML = html;
+        }
+        
+        // Select a player and load their league stats
+        async function selectPlayer(playerId, webName, fullName, teamName, position, price) {
+            selectedPlayer = {
+                id: playerId,
+                web_name: webName,
+                full_name: fullName,
+                team_name: teamName,
+                position: position,
+                price: price
+            };
+            
+            // Hide suggestions
+            hideSuggestions();
+            
+            // Clear search input and show selected player
+            document.getElementById('player-search').value = fullName;
+            
+            // Show gameweek selector
+            document.getElementById('gameweek-selector').style.display = 'block';
+            
+            // Display player header
+            displayPlayerHeader(selectedPlayer);
+            
+            // Load player league stats
+            await loadPlayerLeagueStats(playerId, currentGameweek);
+        }
+        
+        // Display player header
+        function displayPlayerHeader(player) {
+            const headerContainer = document.getElementById('player-header');
+            const initials = player.web_name.substring(0, 2).toUpperCase();
+            
+            const html = `
+                <div class="player-stats-card">
+                    <div class="player-header">
+                        <div class="player-avatar-large">${initials}</div>
+                        <div class="player-header-info">
+                            <h2>${player.full_name}</h2>
+                            <div class="player-header-details">
+                                <strong>${player.team_name}</strong> • ${player.position} • £${player.price}m
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            headerContainer.innerHTML = html;
+            headerContainer.style.display = 'block';
+        }
+        
+        // Load player league statistics
+        async function loadPlayerLeagueStats(playerId, gameweek) {
+            const statsContainer = document.getElementById('stats-grid');
+            
+            try {
+                statsContainer.style.display = 'block';
+                statsContainer.innerHTML = '<div class="loading-spinner"></div> Loading player league stats...';
+                
+                const response = await fetch(`/api/player_league_stats/${playerId}/${gameweek}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    statsContainer.innerHTML = `<div class="error-message"><i class="fas fa-exclamation-triangle"></i> ${data.error}</div>`;
+                    return;
+                }
+                
+                // Create stats cards using the same structure as stats.html
+                createPlayerStatsCards(data);
+                
+            } catch (error) {
+                console.error('Failed to load player stats:', error);
+                statsContainer.innerHTML = '<div class="error-message"><i class="fas fa-exclamation-triangle"></i> Failed to load player statistics</div>';
+            }
+        }
+        
+        // Create player stats cards (reusing stats.html structure)
+        function createPlayerStatsCards(data) {
+            const statsGrid = document.getElementById('stats-grid');
+            statsGrid.innerHTML = '';
+            
+            const ownership = data.ownership;
+            const captaincy = data.captaincy;
+            const transfers = data.transfers;
+            const unique = data.unique_ownership;
+            
+            // Define stats cards
+            const playerStats = [
+                {
+                    id: 'ownership',
+                    name: 'Ownership',
+                    icon: 'fas fa-users',
+                    badge: `${ownership.count} teams (${ownership.percentage}%)`,
+                    data: ownership
+                },
+                {
+                    id: 'captaincy',
+                    name: 'Captaincy',
+                    icon: 'fas fa-bolt',
+                    badge: `${captaincy.count} teams (${captaincy.percentage}%)`,
+                    data: captaincy
+                },
+                {
+                    id: 'transfers',
+                    name: 'Transfers',
+                    icon: 'fas fa-exchange-alt',
+                    badge: `Net: ${transfers.net_transfers > 0 ? '+' : ''}${transfers.net_transfers}`,
+                    data: transfers
+                },
+                {
+                    id: 'unique',
+                    name: 'Unique Ownership',
+                    icon: 'fas fa-star',
+                    badge: unique.is_unique ? 'Unique' : 'Multiple',
+                    data: unique
+                }
+            ];
+            
+            // Create each stat card
+            playerStats.forEach(stat => {
+                const card = document.createElement('div');
+                card.className = 'stat-card';
+                card.setAttribute('data-stat-type', stat.id);
+                card.setAttribute('data-loaded', 'true');
+                
+                card.innerHTML = `
+                    <div class="stat-header" onclick="toggleStatCard('${stat.id}')">
+                        <div class="stat-header-left">
+                            <span class="stat-icon"><i class="${stat.icon}"></i></span>
+                            <span class="stat-title">${stat.name}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="stat-badge">${stat.badge}</span>
+                            <span class="expand-icon"><i class="fas fa-chevron-down"></i></span>
+                        </div>
+                    </div>
+                    <div class="stat-content" id="stat-${stat.id}">
+                        ${getStatContent(stat.id, stat.data, data.gameweek)}
+                    </div>
+                `;
+                
+                statsGrid.appendChild(card);
+            });
+        }
+        
+        // Get stat content based on type
+        function getStatContent(statType, statData, gameweek) {
+            switch (statType) {
+                case 'ownership':
+                    if (statData.count === 0) {
+                        return '<div class="stat-placeholder">Not owned by any teams this gameweek</div>';
+                    }
+                    console.log('Team data:', statData.teams);
+                    return `
+                        <div style="margin-bottom: 1rem;">
+                            <strong>GW${gameweek} Ownership</strong><br>
+                            <small>${statData.count} teams (${statData.percentage}%) own this player</small>
+                        </div>
+                        ${statData.teams.map(team => `
+                            <div style="margin-bottom: 0.75rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: 8px;">
+                                <div style="font-weight: bold; color: var(--text-primary);">${team.team_name}</div>
+                                <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                                    ${team.manager}
+                                </div>
+                            </div>
+                        `).join('')}
+                    `;
+                    
+                case 'captaincy':
+                    if (statData.count === 0) {
+                        return '<div class="stat-placeholder">Not captained by any teams this gameweek</div>';
+                    }
+                    return `
+                        <div style="margin-bottom: 1rem;">
+                            <strong>GW${gameweek} Captaincy</strong><br>
+                            <small>${statData.count} teams (${statData.percentage}%) captained this player</small>
+                        </div>
+                        ${statData.teams.map(team => `
+                            <div style="margin-bottom: 0.75rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: 8px;">
+                                <div style="font-weight: bold; color: var(--text-primary);">${team.team_name}</div>
+                                <div style="font-size: 0.9rem; color: var(--text-secondary);">${team.manager}</div>
+                            </div>
+                        `).join('')}
+                    `;
+                    
+                case 'transfers':
+                    if (statData.transferred_in.length === 0 && statData.transferred_out.length === 0) {
+                        return '<div class="stat-placeholder">No transfer activity this gameweek</div>';
+                    }
+                    let transfersHtml = `
+                        <div style="margin-bottom: 1rem;">
+                            <strong>GW${gameweek} Transfers</strong><br>
+                            <small>Net transfers: ${statData.net_transfers > 0 ? '+' : ''}${statData.net_transfers}</small>
+                        </div>
+                    `;
+                    
+                    if (statData.transferred_in.length > 0) {
+                        transfersHtml += `
+                            <h4 style="color: var(--pl-green); margin: 1rem 0 0.5rem 0;">Transferred In (${statData.transferred_in.length})</h4>
+                            ${statData.transferred_in.map(transfer => `
+                                <div style="margin-bottom: 0.5rem; padding: 0.75rem; background: var(--success-bg); border-left: 4px solid var(--pl-green); border-radius: 6px;">
+                                    <div style="font-weight: bold;">${transfer.team_name}</div>
+                                    <div style="font-size: 0.9rem; color: var(--text-secondary);">${transfer.manager}</div>
+                                    <div style="font-size: 0.85rem; margin-top: 0.25rem;">Replaced: ${transfer.replaced_player} • Cost: £${transfer.cost}m</div>
+                                </div>
+                            `).join('')}
+                        `;
+                    }
+                    
+                    if (statData.transferred_out.length > 0) {
+                        transfersHtml += `
+                            <h4 style="color: #ff4757; margin: 1rem 0 0.5rem 0;">Transferred Out (${statData.transferred_out.length})</h4>
+                            ${statData.transferred_out.map(transfer => `
+                                <div style="margin-bottom: 0.5rem; padding: 0.75rem; background: var(--error-bg); border-left: 4px solid #ff4757; border-radius: 6px;">
+                                    <div style="font-weight: bold;">${transfer.team_name}</div>
+                                    <div style="font-size: 0.9rem; color: var(--text-secondary);">${transfer.manager}</div>
+                                    <div style="font-size: 0.85rem; margin-top: 0.25rem;">Replaced by: ${transfer.replacement_player}</div>
+                                </div>
+                            `).join('')}
+                        `;
+                    }
+                    
+                    return transfersHtml;
+                    
+                case 'unique':
+                    if (statData.is_unique) {
+                        return `
+                            <div style="background: var(--success-bg); color: var(--success-text); padding: 1rem; border-radius: 8px; border: 1px solid var(--success-border);">
+                                <i class="fas fa-trophy" style="color: var(--pl-green);"></i>
+                                <strong>Unique Pick!</strong><br>
+                                Only owned by: <strong>${statData.owned_by.team_name}</strong> (${statData.owned_by.manager})
+                            </div>
+                        `;
+                    } else {
+                        return '<div class="stat-placeholder">This player is owned by multiple teams</div>';
+                    }
+                    
+                default:
+                    return '<div class="stat-placeholder">No data available</div>';
+            }
+        }
+        
+        // Toggle stat card (reuse from stats.js)
+        function toggleStatCard(statType) {
+            const card = document.querySelector(`[data-stat-type="${statType}"]`);
+            if (!card) return;
+            
+            const isExpanded = card.classList.contains('expanded');
+            
+            if (isExpanded) {
+                card.classList.remove('expanded');
+            } else {
+                card.classList.add('expanded');
+            }
+        }
+        
+        // Hide suggestions
+        function hideSuggestions() {
+            document.getElementById('search-suggestions').style.display = 'none';
+        }
+        
+        // Gameweek management
+        function changeGameweek(direction) {
+            const newGw = currentGameweek + direction;
+            
+            if (newGw >= 1 && newGw <= maxGameweek) {
+                currentGameweek = newGw;
+                updateGameweekDisplay();
+                
+                // Reload player stats if a player is selected
+                if (selectedPlayer) {
+                    loadPlayerLeagueStats(selectedPlayer.id, currentGameweek);
+                }
+            }
+        }
+        
+        function updateGameweekDisplay() {
+            const currentGwEl = document.getElementById('current-gw');
+            const prevBtn = document.getElementById('prev-gw');
+            const nextBtn = document.getElementById('next-gw');
+            
+            if (currentGwEl) currentGwEl.textContent = `GW ${currentGameweek}`;
+            if (prevBtn) prevBtn.disabled = currentGameweek <= 1;
+            if (nextBtn) nextBtn.disabled = currentGameweek >= maxGameweek;
+        }
+        
+        // Navigation functions
+        function goToHomeTab() {
+            sessionStorage.setItem('activeTab', 'home');
+            window.location.href = '/';
+        }
+        
+        function goToStatsTab() {
+            sessionStorage.setItem('activeTab', 'stats');
+            window.location.href = '/';
+        }
+        
+        function goToSettingsTab() {
+            sessionStorage.setItem('activeTab', 'settings');
+            window.location.href = '/';
+        }
+        
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(function(registrationError) {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
+    
+    <style>
+        /* Search-specific styles */
+        .search-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px var(--shadow);
+            border: 2px solid var(--border);
+        }
+        
+        .search-section h3 {
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .search-section h3 i {
+            color: var(--pl-green);
+        }
+        
+        .search-container {
+            position: relative;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            transition: all 0.2s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--pl-green);
+            background: var(--bg-card);
+            box-shadow: 0 0 0 3px rgba(0, 255, 133, 0.1);
+        }
+        
+        .search-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px var(--shadow);
+            border: 2px solid var(--border);
+            z-index: 1000;
+        }
+        
+        .suggestion-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .suggestion-item:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+        
+        .player-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--pl-purple);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--pl-white);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .player-info {
+            flex: 1;
+        }
+        
+        .player-name {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+        
+        .player-details {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .loading-suggestions, .error-suggestions, .no-data {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+        
+        .error-suggestions {
+            color: var(--error-text);
+            background: var(--error-bg);
+        }
+        
+        .player-stats-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px var(--shadow);
+            border: 2px solid var(--border);
+        }
+        
+        .player-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .player-avatar-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--pl-purple);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--pl-white);
+            font-weight: bold;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        
+        .player-header-info h2 {
+            margin: 0 0 0.5rem 0;
+            color: var(--text-primary);
+        }
+        
+        .player-header-details {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .stat-badge {
+            background: var(--pl-green);
+            color: var(--pl-purple);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        
+        /* Add spacing between stat cards */
+        .stat-card {
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Add spacing between player header and first stat card */
+        .stats-grid {
+            margin-top: 1.5rem;
+        }
+    </style>
+</body>
+</html>

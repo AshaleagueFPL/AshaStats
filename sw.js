@@ -4,12 +4,13 @@
 const CACHE_NAME = 'fpl-analyzer-v1.0.1';
 const urlsToCache = [
   '/',
+  '/search', // Add this line
   '/static/css/styles.css',
   '/static/css/components.css',
   '/static/js/app.js',
   '/static/js/stats.js',
   '/static/js/settings.js',
-  '/static/manifest.json', // Updated path
+  '/static/manifest.json',
   '/static/assets/app-icon-192.png',
   '/static/assets/app-icon-512.png'
 ];

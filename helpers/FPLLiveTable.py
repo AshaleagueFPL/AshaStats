@@ -491,7 +491,6 @@ class FPLLiveTable:
                     'player_name': player_info['web_name'],
                     'team': self._get_team_name(player_info['team']),
                     'position': self._get_position_name(player_info['element_type']),
-                    'selling_price': pick['selling_price'] / 10,
                     'multiplier': pick['multiplier'],
                     'is_captain': pick['is_captain'],
                     'is_vice_captain': pick['is_vice_captain'],

@@ -462,3 +462,274 @@ class FPLAnalyzer:
             "total_players": total_players,
             "total_teams": len(self.teams)
         }
+
+    def search_players(self, search_term, limit=None):
+        """
+        Search for players by name (supports partial matching)
+        
+        Args:
+            search_term (str): Name or partial name to search for
+            limit (int, optional): Maximum number of results to return
+            
+        Returns:
+            List[Dict]: List of matching players with all their attributes
+        """
+        if not self.gdata or not self.gdata.get('elements'):
+            return {"error": "Player data not loaded"}
+        
+        if not search_term or not search_term.strip():
+            return {"error": "Search term cannot be empty"}
+        
+        search_term = search_term.strip().lower()
+        matching_players = []
+        
+        for player in self.gdata['elements']:
+            # Search in multiple name fields
+            web_name = player.get('web_name', '').lower()
+            first_name = player.get('first_name', '').lower()
+            second_name = player.get('second_name', '').lower()
+            full_name = f"{first_name} {second_name}".lower()
+            
+            # Check if search term matches any name variation
+            if (search_term in web_name or 
+                search_term in first_name or 
+                search_term in second_name or 
+                search_term in full_name):
+                
+                # Add readable team and position names
+                team_name = self.id_to_team_name(player['team'])
+                position_name = self._get_position_name(player['element_type'])
+                
+                # Helper function to safely convert to float/int
+                def safe_float(value, default=0.0):
+                    try:
+                        return float(value) if value is not None else default
+                    except (ValueError, TypeError):
+                        return default
+                
+                def safe_int(value, default=0):
+                    try:
+                        return int(value) if value is not None else default
+                    except (ValueError, TypeError):
+                        return default
+                
+                player_info = {
+                    'id': player['id'],
+                    'web_name': player['web_name'],
+                    'first_name': player['first_name'],
+                    'second_name': player['second_name'],
+                    'full_name': f"{player['first_name']} {player['second_name']}",
+                    'team_id': player['team'],
+                    'team_name': team_name,
+                    'position_id': player['element_type'],
+                    'position_name': position_name,
+                    'now_cost': safe_float(player['now_cost']) / 10,  # Convert to actual price
+                    'total_points': safe_int(player['total_points']),
+                    'points_per_game': round(safe_float(player.get('points_per_game', 0)), 1),
+                    'selected_by_percent': safe_float(player.get('selected_by_percent', 0)),
+                    'form': safe_float(player.get('form', 0)),
+                    'dreamteam_count': safe_int(player.get('dreamteam_count', 0)),
+                    'in_dreamteam': player.get('in_dreamteam', False),
+                    'status': player.get('status', 'a'),  # a = available, d = doubtful, i = injured, etc.
+                    'chance_of_playing_this_round': safe_int(player.get('chance_of_playing_this_round')),
+                    'chance_of_playing_next_round': safe_int(player.get('chance_of_playing_next_round')),
+                    'news': player.get('news', ''),
+                    'news_added': player.get('news_added'),
+                    'minutes': safe_int(player.get('minutes', 0)),
+                    'goals_scored': safe_int(player.get('goals_scored', 0)),
+                    'assists': safe_int(player.get('assists', 0)),
+                    'clean_sheets': safe_int(player.get('clean_sheets', 0)),
+                    'goals_conceded': safe_int(player.get('goals_conceded', 0)),
+                    'own_goals': safe_int(player.get('own_goals', 0)),
+                    'penalties_saved': safe_int(player.get('penalties_saved', 0)),
+                    'penalties_missed': safe_int(player.get('penalties_missed', 0)),
+                    'yellow_cards': safe_int(player.get('yellow_cards', 0)),
+                    'red_cards': safe_int(player.get('red_cards', 0)),
+                    'saves': safe_int(player.get('saves', 0)),
+                    'bonus': safe_int(player.get('bonus', 0)),
+                    'bps': safe_int(player.get('bps', 0)),  # Bonus Points System
+                    'influence': safe_float(player.get('influence', 0)),
+                    'creativity': safe_float(player.get('creativity', 0)),
+                    'threat': safe_float(player.get('threat', 0)),
+                    'ict_index': safe_float(player.get('ict_index', 0)),
+                    'starts': safe_int(player.get('starts', 0)),
+                    'expected_goals': safe_float(player.get('expected_goals', 0)),
+                    'expected_assists': safe_float(player.get('expected_assists', 0)),
+                    'expected_goal_involvements': safe_float(player.get('expected_goal_involvements', 0)),
+                    'expected_goals_conceded': safe_float(player.get('expected_goals_conceded', 0)),
+                    'value_form': safe_float(player.get('value_form', 0)),
+                    'value_season': safe_float(player.get('value_season', 0)),
+                    'cost_change_start': safe_int(player.get('cost_change_start', 0)),
+                    'cost_change_event': safe_int(player.get('cost_change_event', 0)),
+                    'cost_change_start_fall': safe_int(player.get('cost_change_start_fall', 0)),
+                    'cost_change_event_fall': safe_int(player.get('cost_change_event_fall', 0)),
+                    'transfers_in': safe_int(player.get('transfers_in', 0)),
+                    'transfers_out': safe_int(player.get('transfers_out', 0)),
+                    'transfers_in_event': safe_int(player.get('transfers_in_event', 0)),
+                    'transfers_out_event': safe_int(player.get('transfers_out_event', 0)),
+                    'ep_this': safe_float(player.get('ep_this', 0)),  # Expected points this gameweek
+                    'ep_next': safe_float(player.get('ep_next', 0)),   # Expected points next gameweek
+                    'special': player.get('special', False),
+                    'squad_number': safe_int(player.get('squad_number')),
+                    'photo': f"https://resources.premierleague.com/premierleague/photos/players/250x250/p{player.get('photo', '').replace('.jpg', '.png')}" if player.get('photo') else None
+                }
+                
+                matching_players.append(player_info)
+        
+        # Sort by total points (highest first) for relevance
+        matching_players.sort(key=lambda x: x['total_points'], reverse=True)
+        
+        # Apply limit if specified
+        if limit and limit > 0:
+            matching_players = matching_players[:limit]
+        
+        return {
+            "search_term": search_term,
+            "total_found": len(matching_players),
+            "players": matching_players
+        }        
+
+    def _get_position_name(self, position_id):
+        """Get position name from bootstrap data"""
+        if not self.gdata or not self.gdata.get('element_types'):
+            return f"Position {position_id}"
+        
+        for position in self.gdata['element_types']:
+            if position['id'] == position_id:
+                return position['singular_name']
+        return f"Position {position_id}"
+    
+    def get_player_league_stats(self, player_id, gameweek):
+        """
+        Get detailed statistics for a specific player within the league
+        
+        Args:
+            player_id (int): Player ID
+            gameweek (int): Gameweek number
+            
+        Returns:
+            Dict: Player statistics within the league
+        """
+        if not self.teams or not self.gdata:
+            return {"error": "League data not loaded"}
+        
+        # Get player info
+        player_info = self.get_player_struct(player_id)
+        if not player_info:
+            return {"error": "Player not found"}
+        
+        # Initialize stats
+        stats = {
+            'player': {
+                'id': player_id,
+                'web_name': player_info['web_name'],
+                'full_name': f"{player_info['first_name']} {player_info['second_name']}",
+                'team': self.id_to_team_name(player_info['team']),
+                'position': self._get_position_name(player_info['element_type']),
+                'price': player_info['now_cost'] / 10,
+                'total_points': player_info['total_points']
+            },
+            'gameweek': gameweek,
+            'ownership': {
+                'teams': [],
+                'count': 0,
+                'percentage': 0
+            },
+            'captaincy': {
+                'teams': [],
+                'count': 0,
+                'percentage': 0
+            },
+            'transfers': {
+                'transferred_in': [],
+                'transferred_out': [],
+                'net_transfers': 0
+            },
+            'unique_ownership': {
+                'is_unique': False,
+                'owned_by': None
+            }
+        }
+        
+        total_teams = len(self.teams)
+        
+        # Check ownership and captaincy for current gameweek
+        for team in self.teams:
+            team_id = team['entry']
+            team_name = team['entry_name']
+            
+            # Get team's current squad
+            team_data = self.get_team_gw_info(team_id, gameweek)
+            if not team_data or not team_data.get('picks'):
+                continue
+            
+            # Check if team owns this player
+            for pick in team_data['picks']:
+                if pick['element'] == player_id:
+                    stats['ownership']['teams'].append({
+                        'team_name': team_name,
+                        'manager': f"{team.get('player_first_name', '')} {team.get('player_last_name', '')}".strip(),
+                        'multiplier': pick['multiplier'],
+                        'is_captain': pick['is_captain'],
+                        'is_vice_captain': pick['is_vice_captain'],
+                    })
+                    stats['ownership']['count'] += 1
+                    
+                    # Check captaincy
+                    if pick['is_captain']:
+                        stats['captaincy']['teams'].append({
+                            'team_name': team_name,
+                            'manager': f"{team.get('player_first_name', '')} {team.get('player_last_name', '')}".strip()
+                        })
+                        stats['captaincy']['count'] += 1
+                    break
+        
+        # Calculate percentages
+        stats['ownership']['percentage'] = round((stats['ownership']['count'] / total_teams) * 100, 1) if total_teams > 0 else 0
+        stats['captaincy']['percentage'] = round((stats['captaincy']['count'] / total_teams) * 100, 1) if total_teams > 0 else 0
+        
+        # Check for unique ownership
+        if stats['ownership']['count'] == 1:
+            stats['unique_ownership']['is_unique'] = True
+            stats['unique_ownership']['owned_by'] = stats['ownership']['teams'][0]
+        
+        # Check transfers for this gameweek
+        for team in self.teams:
+            team_id = team['entry']
+            team_name = team['entry_name']
+            
+            transfers = self.get_team_transfers_info(team_id)
+            if not transfers:
+                continue
+            
+            for transfer in transfers:
+                if transfer['event'] != gameweek:
+                    continue
+                
+                manager_name = f"{team.get('player_first_name', '')} {team.get('player_last_name', '')}".strip()
+                
+                # Transferred in
+                if transfer['element_in'] == player_id:
+                    out_player_name = self.id_to_name(transfer['element_out'])
+                    stats['transfers']['transferred_in'].append({
+                        'team_name': team_name,
+                        'manager': manager_name,
+                        'replaced_player': out_player_name,
+                        'cost': transfer.get('element_in_cost', 0) / 10,
+                        'time': transfer.get('time', '')
+                    })
+                
+                # Transferred out
+                if transfer['element_out'] == player_id:
+                    in_player_name = self.id_to_name(transfer['element_in'])
+                    stats['transfers']['transferred_out'].append({
+                        'team_name': team_name,
+                        'manager': manager_name,
+                        'replacement_player': in_player_name,
+                        'time': transfer.get('time', '')
+                    })
+        
+        # Calculate net transfers
+        stats['transfers']['net_transfers'] = len(stats['transfers']['transferred_in']) - len(stats['transfers']['transferred_out'])
+        
+        return stats

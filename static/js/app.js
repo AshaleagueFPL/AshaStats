@@ -14,6 +14,13 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('DOM loaded, initializing app...');
         loadSettings();
         initializeApp();
+        
+        // Check if we should switch to a specific tab (from search page navigation)
+        const storedTab = sessionStorage.getItem('activeTab');
+        if (storedTab && ['stats', 'settings'].includes(storedTab)) {
+            switchTab(storedTab);
+            sessionStorage.removeItem('activeTab'); // Clean up
+        }
     }, 100);
 });
 
@@ -31,6 +38,9 @@ function switchTab(tabName) {
     if (tabName === 'home' && window.AppState.isDataLoaded) {
         loadLiveTable();
     }
+    
+    // Clear any stored active tab
+    sessionStorage.removeItem('activeTab');
 }
 
 // View Toggle Management
