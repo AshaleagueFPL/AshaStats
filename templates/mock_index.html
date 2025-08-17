@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#38003c">
+    <title>FPL League Analyzer - Mock Testing</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+</head>
+    
+<body data-theme="light">
+    <!-- Header -->
+    <header class="header">
+        <h1><i class="fas fa-trophy"></i> FPL League Analyzer - Mock Testing</h1>
+    </header>    
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="welcome-section">
+            <h2>Mock Testing Environment</h2>
+            <p>Test the export functionality with sample data</p>
+        </div>
+        
+        <!-- Mock Controls -->
+        <div class="mock-controls">
+            <h3>Load Mock Data</h3>
+            <button class="mock-btn" onclick="loadMockData('preseason')">
+                <i class="fas fa-users"></i> Load Pre-Season (15 teams)
+            </button>
+            <button class="mock-btn" onclick="loadMockData('active')">
+                <i class="fas fa-trophy"></i> Load Active Season (15 teams)
+            </button>
+        </div>
+        
+        <!-- View Toggle Controls for Mock (only show when active season is loaded) -->
+        <div id="mock-view-toggle-section" class="view-toggle-container" style="display: none;">
+            <div class="view-toggle-buttons">
+                <button class="view-toggle-btn active" onclick="toggleMockView('season')">
+                    <i class="fas fa-crown"></i> Season
+                </button>
+                <button class="view-toggle-btn" onclick="toggleMockView('gameweek')">
+                    <i class="fas fa-calendar-day"></i> Gameweek
+                </button>
+            </div>
+        </div>
+        
+        <!-- Table Container -->
+        <div id="mock-table-container">
+            <div class="live-table-placeholder">
+                <p><i class="fas fa-play"></i> Click a button above to load mock data</p>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        // Mock state management
+        let mockCurrentView = 'season';
+        let mockCurrentData = null;
+        
+        // Toggle mock view
+        function toggleMockView(viewType) {
+            mockCurrentView = viewType;
+            
+            // Update toggle buttons
+            document.querySelectorAll('#mock-view-toggle-section .view-toggle-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`#mock-view-toggle-section [onclick="toggleMockView('${viewType}')"]`).classList.add('active');
+            
+            // Re-render table if we have data
+            if (mockCurrentData && !mockCurrentData.is_pre_season) {
+                displayLiveTable(mockCurrentData, document.getElementById('mock-table-container'));
+            }
+        }
+        
+        // Load mock data
+        async function loadMockData(type) {
+            const container = document.getElementById('mock-table-container');
+            container.innerHTML = '<div class="loading-spinner"></div> Loading mock data...';
+            
+            try {
+                const response = await fetch(`/api/mock_table/${type}`);
+                const data = await response.json();
+                
+                console.log('Mock data loaded:', data);
+                
+                // Store data for view toggling
+                mockCurrentData = data;
+                
+                if (data.error) {
+                    container.innerHTML = `<div class="error-message">❌ ${data.error}</div>`;
+                    return;
+                }
+                
+                if (data.is_pre_season) {
+                    // Hide toggle for pre-season
+                    document.getElementById('mock-view-toggle-section').style.display = 'none';
+                    displayPreSeasonTeams(data, container);
+                } else {
+                    // Show toggle for active season
+                    document.getElementById('mock-view-toggle-section').style.display = 'block';
+                    displayLiveTable(data, container);
+                }
+                
+            } catch (error) {
+                console.error('Mock data error:', error);
+                container.innerHTML = '<div class="error-message">❌ Failed to load mock data</div>';
+            }
+        }
+
+        function displayLiveTable(data, container) {
+            const currentView = mockCurrentView;
+            const viewTitle = currentView === 'season' ? 'Season Table' : `GW${data.current_gameweek} Table`;
+            const pointsLabel = currentView === 'season' ? 'Total' : `GW${data.current_gameweek}`;
+            
+            let html = `
+                <div class="live-table">
+                    <div class="live-table-header">
+                        <h3><i class="fas fa-trophy"></i> ${data.league_name}</h3>
+                        <p>${viewTitle} | ${data.total_teams} teams</p>
+                    </div>
+                    
+                    <!-- Mobile Card Layout (visible on mobile) -->
+                    <div class="mobile-table">
+            `;
+            
+            // Process data based on view
+            let tableData;
+            if (currentView === 'gameweek') {
+                // For gameweek view, sort by gameweek points
+                tableData = [...data.table].sort((a, b) => b.gameweek_points - a.gameweek_points);
+            } else {
+                // For season view, use existing total points ranking
+                tableData = data.table;
+            }
+            
+            tableData.forEach((team, index) => {
+                const isTopThree = index < 3;
+                const cardClass = isTopThree ? 'top-three' : '';
+                
+                let positionIcon = '';
+                if (index === 0) positionIcon = '👑';
+                else if (index === 1) positionIcon = '🥈';
+                else if (index === 2) positionIcon = '🥉';
+                
+                const displayRank = index + 1;
+                const displayPoints = currentView === 'gameweek' ? team.gameweek_points : team.total_points;
+                
+                html += `
+                    <div class="mobile-team-card ${cardClass}">
+                        <div class="mobile-team-header">
+                            <div class="position-badge">${positionIcon} ${displayRank}</div>
+                            <div class="team-details">
+                                <div class="team-name">${team.team_name}</div>
+                                <div class="manager-name">${team.manager_name}</div>
+                            </div>
+                            <div class="points-summary">
+                                <div class="total-points">${displayPoints}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                    
+                    <!-- Desktop Table Layout (visible on desktop) -->
+                    <div class="desktop-table">
+                        <div class="table-wrapper">
+                            <table class="live-table-grid">
+                                <thead>
+                                    <tr>
+                                        <th>Pos</th>
+                                        <th>Team Name</th>
+                                        <th>Manager</th>
+                                        <th>${pointsLabel}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+            `;
+            
+            tableData.forEach((team, index) => {
+                const isTopThree = index < 3;
+                const rowClass = isTopThree ? 'top-three' : '';
+                
+                let positionIcon = '';
+                if (index === 0) positionIcon = '👑';
+                else if (index === 1) positionIcon = '🥈';
+                else if (index === 2) positionIcon = '🥉';
+                
+                const displayRank = index + 1;
+                const primaryPoints = currentView === 'gameweek' ? team.gameweek_points : team.total_points;
+                
+                html += `
+                    <tr class="${rowClass}">
+                        <td class="position">${positionIcon} ${displayRank}</td>
+                        <td class="team-name">${team.team_name}</td>
+                        <td class="manager-name">${team.manager_name}</td>
+                        <td class="total-points">${primaryPoints}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Export Buttons Container -->
+                    <div class="export-buttons-container">
+                        <button class="export-button season-export" onclick="exportMockTable('${data.league_name}', 'Season Table', false, 'season')">
+                            <i class="fas fa-download"></i> Export Season Table
+                        </button>
+                        <button class="export-button gameweek-export" onclick="exportMockTable('${data.league_name}', 'GW${data.current_gameweek} Table', false, 'gameweek')">
+                            <i class="fas fa-download"></i> Export Gameweek Table
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        function displayPreSeasonTeams(data, container) {
+            let html = `
+                <div class="teams-list">
+                    <div class="teams-list-header">
+                        <h3><i class="fas fa-users"></i> ${data.league_name}</h3>
+                        <p>Pre-Season - ${data.total_teams} teams ready</p>
+                    </div>
+                    <div class="teams-grid">
+            `;
+            
+            data.teams.forEach((team) => {
+                html += `
+                    <div class="team-card">
+                        <div class="team-info">
+                            <div class="team-name">${team.team_name}</div>
+                            <div class="team-manager-name">${team.manager_name}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                    <button class="export-button" onclick="exportMockTable('${data.league_name}', 'Pre-Season', true, 'preseason')">
+                        <i class="fas fa-download"></i> Export as Image
+                    </button>
+                    <div class="pre-season-note">
+                        <p><i class="fas fa-info-circle"></i> Season hasn't started yet. The live table will appear once gameweek 1 begins.</p>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        // Export mock table as image - Updated with exportType parameter
+        async function exportMockTable(leagueName, gameweek, isPreSeason, exportType = 'current') {
+            const buttons = document.querySelectorAll('.export-button');
+            const activeButton = exportType === 'season' ? 
+                document.querySelector('.season-export') : 
+                exportType === 'gameweek' ? 
+                document.querySelector('.gameweek-export') : 
+                document.querySelector('.export-button');
+            
+            // Disable all export buttons
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                if (btn === activeButton) {
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+                }
+            });
+            
+            try {
+                // Get appropriate mock data based on export type
+                let tableType;
+                let data;
+                
+                if (isPreSeason) {
+                    tableType = 'preseason';
+                } else {
+                    tableType = 'active';
+                }
+                
+                const response = await fetch(`/api/mock_table/${tableType}`);
+                data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Use the same export logic as the main app
+                await exportTableAsImageFromData(data, leagueName, gameweek, isPreSeason, exportType);
+                
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('Failed to export image: ' + error.message);
+            } finally {
+                // Reset all buttons
+                buttons.forEach(btn => {
+                    btn.disabled = false;
+                });
+                
+                const seasonBtn = document.querySelector('.season-export');
+                const gameweekBtn = document.querySelector('.gameweek-export');
+                const singleBtn = document.querySelector('.export-button:not(.season-export):not(.gameweek-export)');
+                
+                if (seasonBtn) seasonBtn.innerHTML = '<i class="fas fa-download"></i> Export Season Table';
+                if (gameweekBtn) gameweekBtn.innerHTML = '<i class="fas fa-download"></i> Export Gameweek Table';
+                if (singleBtn) singleBtn.innerHTML = '<i class="fas fa-download"></i> Export as Image';
+            }
+        }
+
+        // Simplified export function for mock data - Updated with exportType parameter
+        async function exportTableAsImageFromData(data, leagueName, gameweek, isPreSeason, exportType = 'current') {
+            // Create canvas
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size and styling
+            const padding = 40;
+            const headerHeight = 120;
+            const topMargin = 30;
+            const lineHeight = 60;
+            const borderRadius = 15;
+            
+            // Helper function to draw rounded rectangle
+            function drawRoundedRect(ctx, x, y, width, height, radius, fillColor, strokeColor = null) {
+                ctx.beginPath();
+                ctx.moveTo(x + radius, y);
+                ctx.lineTo(x + width - radius, y);
+                ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+                ctx.lineTo(x + width, y + height - radius);
+                ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                ctx.lineTo(x + radius, y + height);
+                ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+                ctx.lineTo(x, y + radius);
+                ctx.quadraticCurveTo(x, y, x + radius, y);
+                ctx.closePath();
+                
+                if (fillColor) {
+                    ctx.fillStyle = fillColor;
+                    ctx.fill();
+                }
+                
+                if (strokeColor) {
+                    ctx.strokeStyle = strokeColor;
+                    ctx.stroke();
+                }
+            }
+            
+            if (isPreSeason) {
+                // Pre-season layout
+                const teams = data.teams || [];
+                canvas.width = 800;
+                canvas.height = headerHeight + topMargin + (lineHeight * teams.length) + padding;
+                
+                // Background
+                ctx.fillStyle = '#2d3748';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Header
+                ctx.fillStyle = '#38003c';
+                ctx.fillRect(0, 0, canvas.width, headerHeight);
+                
+                // League name
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 32px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(leagueName, canvas.width / 2, 45);
+                
+                // Subtitle
+                ctx.font = '20px Arial';
+                ctx.fillText(`${gameweek} - ${teams.length} teams ready`, canvas.width / 2, 80);
+                
+                // Draw the entire table as one rounded rectangle
+                const tableY = headerHeight + topMargin;
+                const tableHeight = lineHeight * teams.length;
+                const tableWidth = canvas.width - (padding * 2);
+                
+                // Draw table background
+                drawRoundedRect(ctx, padding, tableY, tableWidth, tableHeight, borderRadius, '#4a5568', '#718096');
+                
+                // Draw teams
+                teams.forEach((team, index) => {
+                    const y = tableY + (index * lineHeight);
+                    
+                    // Alternating row overlay
+                    if (index % 2 === 1) {
+                        ctx.fillStyle = 'rgba(45, 55, 72, 0.5)';
+                        ctx.fillRect(padding + 2, y + 1, tableWidth - 4, lineHeight - 2);
+                    }
+                    
+                    // Team name
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 22px Arial';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(team.team_name, padding + 20, y + 25);
+                    
+                    // Manager name
+                    ctx.fillStyle = '#cbd5e0';
+                    ctx.font = '18px Arial';
+                    ctx.fillText(team.manager_name, padding + 20, y + 50);
+                });
+                
+            } else {
+                // Active season layout
+                let teams = data.table || [];
+                
+                // Sort teams based on export type
+                if (exportType === 'gameweek') {
+                    teams = [...teams].sort((a, b) => b.gameweek_points - a.gameweek_points);
+                }
+                // For season export, teams are already sorted by total points
+                
+                canvas.width = 800;
+                canvas.height = headerHeight + topMargin + (lineHeight * (teams.length + 1)) + padding;
+                
+                // Background
+                ctx.fillStyle = '#2d3748';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Header
+                ctx.fillStyle = '#38003c';
+                ctx.fillRect(0, 0, canvas.width, headerHeight);
+                
+                // League name
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 32px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(leagueName, canvas.width / 2, 45);
+                
+                // Subtitle - Updated based on export type
+                ctx.font = '20px Arial';
+                const subtitleText = exportType === 'season' ? 
+                    `Season Table | ${teams.length} teams` : 
+                    `GW${data.current_gameweek} Table | ${teams.length} teams`;
+                ctx.fillText(subtitleText, canvas.width / 2, 80);
+                
+                // Draw table
+                const tableY = headerHeight + topMargin;
+                const tableHeight = lineHeight * (teams.length + 1);
+                const tableWidth = canvas.width - (padding * 2);
+                
+                drawRoundedRect(ctx, padding, tableY, tableWidth, tableHeight, borderRadius, '#4a5568', '#718096');
+                
+                // Table header
+                ctx.fillStyle = '#38003c';
+                ctx.fillRect(padding + 2, tableY + 2, tableWidth - 4, lineHeight - 2);
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 18px Arial';
+                ctx.textAlign = 'left';
+                
+                ctx.fillText('Pos', padding + 20, tableY + 25);
+                ctx.fillText('Team', padding + 100, tableY + 25);
+                ctx.fillText('Manager', padding + 100, tableY + 50);
+                
+                // Points header - changes based on export type
+                const pointsLabel = exportType === 'gameweek' ? `GW${data.current_gameweek}` : 'Total';
+                ctx.fillText(pointsLabel, padding + 650, tableY + 25);
+                
+                // Table rows
+                teams.forEach((team, index) => {
+                    const y = tableY + lineHeight + (index * lineHeight);
+                    const isTopThree = index < 3;
+                    
+                    // Alternating rows and top 3 highlighting
+                    if (index % 2 === 1) {
+                        ctx.fillStyle = 'rgba(45, 55, 72, 0.5)';
+                        ctx.fillRect(padding + 2, y + 1, tableWidth - 4, lineHeight - 2);
+                    }
+                    
+                    if (isTopThree) {
+                        ctx.fillStyle = 'rgba(34, 84, 61, 0.7)';
+                        ctx.fillRect(padding + 2, y + 1, tableWidth - 4, lineHeight - 2);
+                    }
+                    
+                    // Position
+                    ctx.fillStyle = isTopThree ? '#9ae6b4' : '#ffffff';
+                    ctx.font = 'bold 20px Arial';
+                    ctx.textAlign = 'left';
+                    let positionText = (index + 1).toString();
+                    if (index === 0) positionText = '👑 ' + positionText;
+                    else if (index === 1) positionText = '🥈 ' + positionText;
+                    else if (index === 2) positionText = '🥉 ' + positionText;
+                    
+                    ctx.fillText(positionText, padding + 20, y + 25);
+                    
+                    // Team name
+                    ctx.fillText(team.team_name, padding + 100, y + 25);
+                    
+                    // Manager name
+                    ctx.fillStyle = isTopThree ? '#9ae6b4' : '#cbd5e0';
+                    ctx.font = '16px Arial';
+                    ctx.fillText(team.manager_name, padding + 100, y + 50);
+                    
+                    // Points - Use appropriate points based on export type
+                    ctx.fillStyle = isTopThree ? '#9ae6b4' : '#ffffff';
+                    ctx.font = 'bold 18px Arial';
+                    ctx.textAlign = 'center';
+                    
+                    const displayPoints = exportType === 'gameweek' ? team.gameweek_points : team.total_points;
+                    ctx.fillText(displayPoints.toString(), padding + 675, y + 37);
+                });
+            }
+            
+            // Convert canvas to blob and download
+            return new Promise((resolve) => {
+                canvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    
+                    // Generate appropriate filename based on export type
+                    let filename;
+                    if (exportType === 'gameweek') {
+                        filename = `${leagueName.replace(/[^a-zA-Z0-9]/g, '_')}_GW${data.current_gameweek}_Table_mock.png`;
+                    } else if (exportType === 'season') {
+                        filename = `${leagueName.replace(/[^a-zA-Z0-9]/g, '_')}_Season_Table_mock.png`;
+                    } else {
+                        filename = `${leagueName.replace(/[^a-zA-Z0-9]/g, '_')}_${gameweek.replace(/[^a-zA-Z0-9]/g, '_')}_mock.png`;
+                    }
+                    
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    resolve();
+                }, 'image/png');
+            });
+        }
+   </script>
+</body>
+</html>

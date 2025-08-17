@@ -60,9 +60,29 @@ class FPLAnalyzer:
             
         league_data = self.fpl_api_get(f"leagues-classic/{self.league_id}/standings/")
         if league_data:
-            self.teams = league_data['standings']['results']
+            # FIX: Better handling of team data
+            standings = league_data.get('standings', {}).get('results', [])
+            
+            if standings:
+                # Use active standings if available
+                self.teams = standings
+                print(f"Loaded {len(self.teams)} active teams")
+            else:
+                # Fall back to new entries (pre-season)
+                new_entries = league_data.get('new_entries', {})
+                if isinstance(new_entries, dict):
+                    self.teams = new_entries.get('results', [])
+                else:
+                    self.teams = new_entries if isinstance(new_entries, list) else []
+                print(f"Loaded {len(self.teams)} pending teams (pre-season)")
+            
+            # Debug: Print first team structure to see available fields
+            if self.teams:
+                print("Sample team data structure:")
+                print(f"Available fields: {list(self.teams[0].keys())}")
+                
             return True
-        return False
+        return False    
     
     def get_team_gw_info(self, team_id, gameweek):
         """Get team gameweek info"""
@@ -190,7 +210,7 @@ class FPLAnalyzer:
         return {
             "title": "Effective Ownership",
             "gameweek": gameweek,
-            "data": players[:20],
+            "data": players,
             "total_teams": total_teams
         }
     

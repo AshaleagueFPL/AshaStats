@@ -182,8 +182,11 @@ function formatOwnershipData(data) {
     
     let html = `<div style="margin-bottom: 1rem; padding: 1rem; background: var(--pl-purple); color: var(--pl-white); border-radius: 8px; text-align: center; font-weight: 600;">
         <strong style="font-size: 1.1rem;">GW${data.gameweek} Effective Ownership</strong><br>
-        <small style="opacity: 0.9;">Top ${data.data.length} most owned players</small>
+        <small style="opacity: 0.9;">All ${data.data.length} players in teams</small>
     </div>`;
+    
+    // Add a scrollable container for large datasets
+    html += '<div style="max-height: 400px; overflow-y: auto; padding-right: 0.5rem;">';
     
     data.data.forEach((player, index) => {
         const isHighOwnership = player.ownership > 50;
@@ -209,6 +212,8 @@ function formatOwnershipData(data) {
             </div>
         `;
     });
+    
+    html += '</div>'; // Close scrollable container
     
     return html;
 }
@@ -282,6 +287,74 @@ function formatTransferData(data) {
     return html || '<p>No transfer data available</p>';
 }
 
+function formatUniqueData(data) {
+    if (!data.data || data.data.length === 0) {
+        return '<p>No unique players this gameweek</p>';
+    }
+    
+    let html = `<div style="margin-bottom: 1rem; padding: 0.75rem; background: var(--pl-purple); color: white; border-radius: 8px; text-align: center;">
+        <strong>GW${data.gameweek} Unique Players</strong><br>
+        <small>All ${data.data.length} managers with unique players</small>
+    </div>`;
+    
+    // Add scrollable container for all managers
+    html += '<div style="max-height: 400px; overflow-y: auto; padding-right: 0.5rem;">';
+    
+    data.data.forEach(manager => {
+        html += `
+            <div style="margin-bottom: 0.75rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <strong style="color: var(--text-primary);">${manager.manager}</strong>
+                    <span style="background: var(--pl-green); color: var(--pl-purple); padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">
+                        ${manager.count} unique
+                    </span>
+                </div>
+                <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                    ${manager.unique_players.join(', ')}
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>'; // Close scrollable container
+    
+    return html;
+}
+
+function formatRepresentationData(data) {
+    if (!data.data || data.data.length === 0) {
+        return '<p>No team representation data available</p>';
+    }
+    
+    let html = `<div style="margin-bottom: 1rem; padding: 0.75rem; background: var(--pl-purple); color: white; border-radius: 8px; text-align: center;">
+        <strong>GW${data.gameweek} Team Representation</strong><br>
+        <small>All ${data.data.length} Premier League teams (${data.total_players} total players)</small>
+    </div>`;
+    
+    // Add scrollable container for all teams
+    html += '<div style="max-height: 400px; overflow-y: auto; padding-right: 0.5rem;">';
+    
+    data.data.forEach(team => {
+        const isPopular = team.percentage > 10;
+        const bgColor = isPopular ? 'var(--pl-green)' : 'var(--bg-secondary)';
+        const textColor = isPopular ? 'var(--pl-purple)' : 'var(--text-primary)';
+        
+        html += `
+            <div style="margin-bottom: 0.5rem; padding: 0.75rem; background: ${bgColor}; color: ${textColor}; border-radius: 8px; border: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <strong>${team.team}</strong>
+                    <span style="background: ${isPopular ? 'rgba(56, 0, 60, 0.2)' : 'var(--pl-purple)'}; color: ${isPopular ? 'var(--pl-purple)' : 'white'}; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">
+                        ${team.count} (${team.percentage}%)
+                    </span>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>'; // Close scrollable container
+    
+    return html;
+}
 
 function formatRankingsData(data) {
     if (!data.data || data.data.length === 0) {
@@ -290,8 +363,11 @@ function formatRankingsData(data) {
     
     let html = `<div style="margin-bottom: 1rem; padding: 1rem; background: var(--pl-purple); color: var(--pl-white); border-radius: 8px; text-align: center; font-weight: 600;">
         <strong style="font-size: 1.1rem;">GW${data.gameweek} Manager Rankings</strong><br>
-        <small style="opacity: 0.9;">${data.total_teams} teams</small>
+        <small style="opacity: 0.9;">All ${data.total_teams} teams</small>
     </div>`;
+    
+    // Add scrollable container for all managers
+    html += '<div style="max-height: 400px; overflow-y: auto; padding-right: 0.5rem;">';
     
     data.data.forEach((manager, index) => {
         let medal;
@@ -316,64 +392,7 @@ function formatRankingsData(data) {
         `;
     });
     
-    return html;
-}
-
-function formatUniqueData(data) {
-    if (!data.data || data.data.length === 0) {
-        return '<p>No unique players this gameweek</p>';
-    }
-    
-    let html = `<div style="margin-bottom: 1rem; padding: 0.75rem; background: var(--pl-purple); color: white; border-radius: 8px; text-align: center;">
-        <strong>GW${data.gameweek} Unique Players</strong><br>
-        <small>Players owned by only one team</small>
-    </div>`;
-    
-    data.data.forEach(manager => {
-        html += `
-            <div style="margin-bottom: 0.75rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <strong style="color: var(--text-primary);">${manager.manager}</strong>
-                    <span style="background: var(--pl-green); color: var(--pl-purple); padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">
-                        ${manager.count} unique
-                    </span>
-                </div>
-                <div style="font-size: 0.9rem; color: var(--text-secondary);">
-                    ${manager.unique_players.join(', ')}
-                </div>
-            </div>
-        `;
-    });
-    
-    return html;
-}
-
-function formatRepresentationData(data) {
-    if (!data.data || data.data.length === 0) {
-        return '<p>No team representation data available</p>';
-    }
-    
-    let html = `<div style="margin-bottom: 1rem; padding: 0.75rem; background: var(--pl-purple); color: white; border-radius: 8px; text-align: center;">
-        <strong>GW${data.gameweek} Team Representation</strong><br>
-        <small>${data.total_players} total players selected</small>
-    </div>`;
-    
-    data.data.forEach(team => {
-        const isPopular = team.percentage > 10;
-        const bgColor = isPopular ? 'var(--pl-green)' : 'var(--bg-secondary)';
-        const textColor = isPopular ? 'var(--pl-purple)' : 'var(--text-primary)';
-        
-        html += `
-            <div style="margin-bottom: 0.5rem; padding: 0.75rem; background: ${bgColor}; color: ${textColor}; border-radius: 8px; border: 1px solid var(--border);">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <strong>${team.team}</strong>
-                    <span style="background: ${isPopular ? 'rgba(56, 0, 60, 0.2)' : 'var(--pl-purple)'}; color: ${isPopular ? 'var(--pl-purple)' : 'white'}; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">
-                        ${team.count} (${team.percentage}%)
-                    </span>
-                </div>
-            </div>
-        `;
-    });
+    html += '</div>'; // Close scrollable container
     
     return html;
 }
