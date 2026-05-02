@@ -349,7 +349,10 @@ def available_stats():
             {"id": "transfers", "name": "Transfer Summary", "icon": "fas fa-exchange-alt"},
             {"id": "rankings", "name": "Manager Rankings", "icon": "fas fa-trophy"},
             {"id": "unique", "name": "Unique Players", "icon": "fas fa-star"},
-            {"id": "representation", "name": "Team Representation", "icon": "fas fa-building"}
+            {"id": "representation", "name": "Team Representation", "icon": "fas fa-building"},
+            {"id": "most_owned_not_in_league", "name": "Missing Popular Players", "icon": "fas fa-exclamation-triangle"},
+            {"id": "cs_effect", "name": "Clean Sheet Potential", "icon": "fas fa-shield-alt"},
+            {"id": "matrix_by_pl_team", "name": "Team-wise Player Matrix", "icon": "fas fa-table"}
         ]
     })
 
@@ -384,6 +387,270 @@ def get_player_league_stats(player_id, gameweek):
         return jsonify(stats)
     except Exception as e:
         return jsonify({"error": f"Failed to get player stats: {str(e)}"})
+    
+@app.route('/api/team_squad/<int:team_id>/<int:gameweek>')
+def get_team_squad(team_id, gameweek):
+    """Get team squad for a specific gameweek with player details and points"""
+    if not analyzer.league_id:
+        return jsonify({"error": "No league configured"})
+    
+    try:
+        # Get team's gameweek data
+        team_data = analyzer.get_team_gw_info(team_id, gameweek)
+        
+        if not team_data or not team_data.get('picks'):
+            return jsonify({"error": "No squad data found for this team"})
+        
+        # Get live player data for this gameweek
+        live_data = {}
+        try:
+            live_response = analyzer.fpl_api_get(f"event/{gameweek}/live/")
+            if live_response and 'elements' in live_response:
+                for player_data in live_response['elements']:
+                    player_id = player_data['id']
+                    stats = player_data.get('stats', {})
+                    live_data[player_id] = {
+                        'total_points': stats.get('total_points', 0),
+                        'minutes': stats.get('minutes', 0),
+                        'goals_scored': stats.get('goals_scored', 0),
+                        'assists': stats.get('assists', 0),
+                        'clean_sheets': stats.get('clean_sheets', 0),
+                        'goals_conceded': stats.get('goals_conceded', 0),
+                        'yellow_cards': stats.get('yellow_cards', 0),
+                        'red_cards': stats.get('red_cards', 0),
+                        'saves': stats.get('saves', 0),
+                        'bonus': stats.get('bonus', 0),
+                        'bps': stats.get('bps', 0)
+                    }
+        except Exception as e:
+            print(f"Failed to get live data: {e}")
+            # Continue without live data
+        
+        # Get team info from league data - try multiple approaches
+        team_info = None
+        manager_name = "Unknown Manager"
+        team_name = "Unknown Team"
+        total_points = 0
+        rank = 0
+        
+        # First try to get from league standings
+        league_data = analyzer.fpl_api_get(f"leagues-classic/{analyzer.league_id}/standings/")
+        if league_data and 'standings' in league_data:
+            for team in league_data['standings']['results']:
+                if team['entry'] == team_id:
+                    team_info = team
+                    # Try different field combinations for manager name
+                    first_name = team.get('player_first_name', '').strip()
+                    last_name = team.get('player_last_name', '').strip()
+                    
+                    if first_name and last_name:
+                        manager_name = f"{first_name} {last_name}"
+                    elif first_name:
+                        manager_name = first_name
+                    elif last_name:
+                        manager_name = last_name
+                    else:
+                        # Try alternative field names
+                        manager_name = (team.get('player_name') or 
+                                      team.get('manager_name') or 
+                                      team.get('entry_name', 'Unknown Manager'))
+                    
+                    team_name = team.get('entry_name', 'Unknown Team')
+                    total_points = team.get('total', 0)
+                    rank = team.get('rank', 0)
+                    break
+        
+        # If not found in standings, try new entries (pre-season)
+        if not team_info and league_data:
+            new_entries = league_data.get('new_entries', {})
+            if isinstance(new_entries, dict):
+                pending_teams = new_entries.get('results', [])
+            else:
+                pending_teams = new_entries if isinstance(new_entries, list) else []
+            
+            for team in pending_teams:
+                if team.get('entry') == team_id:
+                    # Try different field combinations for manager name
+                    first_name = team.get('player_first_name', '').strip()
+                    last_name = team.get('player_last_name', '').strip()
+                    
+                    if first_name and last_name:
+                        manager_name = f"{first_name} {last_name}"
+                    elif first_name:
+                        manager_name = first_name
+                    elif last_name:
+                        manager_name = last_name
+                    else:
+                        # Try alternative field names
+                        manager_name = (team.get('player_name') or 
+                                      team.get('manager_name') or 
+                                      team.get('entry_name', 'Unknown Manager'))
+                    
+                    team_name = team.get('entry_name', 'Unknown Team')
+                    break
+        
+        # If still not found, get basic team info from entry endpoint
+        if not team_info:
+            try:
+                entry_data = analyzer.fpl_api_get(f"entry/{team_id}/")
+                if entry_data:
+                    first_name = entry_data.get('player_first_name', '').strip()
+                    last_name = entry_data.get('player_last_name', '').strip()
+                    
+                    if first_name and last_name:
+                        manager_name = f"{first_name} {last_name}"
+                    elif first_name:
+                        manager_name = first_name
+                    elif last_name:
+                        manager_name = last_name
+                    else:
+                        manager_name = entry_data.get('name', 'Unknown Manager')
+                    
+                    team_name = entry_data.get('name', 'Unknown Team')
+                    total_points = entry_data.get('summary_overall_points', 0)
+                    rank = entry_data.get('summary_overall_rank', 0)
+            except:
+                pass  # Use defaults if entry endpoint fails
+        
+        # Process squad data
+        starting_xi = []
+        bench = []
+        captain_id = None
+        vice_captain_id = None
+        
+        for pick in team_data['picks']:
+            player_id = pick['element']
+            player_info = analyzer.get_player_struct(player_id)
+            
+            if not player_info:
+                continue
+            
+            # Get position info
+            position_name = analyzer._get_position_name(player_info['element_type'])
+            team_name_pl = analyzer.id_to_team_name(player_info['team'])
+            
+            # Check for captain/vice captain
+            if pick.get('is_captain'):
+                captain_id = player_id
+            if pick.get('is_vice_captain'):
+                vice_captain_id = player_id
+            
+            # Get live player data
+            player_live_data = live_data.get(player_id, {})
+            gameweek_points = player_live_data.get('total_points', 0)
+            
+            # Calculate final points with multiplier
+            final_points = gameweek_points * pick['multiplier']
+            
+            player_data = {
+                'id': player_id,
+                'web_name': player_info['web_name'],
+                'full_name': f"{player_info['first_name']} {player_info['second_name']}",
+                'team_name': team_name_pl,
+                'position': position_name,
+                'position_id': player_info['element_type'],
+                'multiplier': pick['multiplier'],
+                'is_captain': pick.get('is_captain', False),
+                'is_vice_captain': pick.get('is_vice_captain', False),
+                'squad_position': pick['position'],
+                'now_cost': player_info['now_cost'] / 10,
+                'total_points': player_info['total_points'],
+                'form': player_info.get('form', '0'),
+                'photo': f"https://resources.premierleague.com/premierleague25/photos/players/110x140/{player_info.get('photo', '').replace('.jpg', '.png')}" if player_info.get('photo') else None,
+                # Live gameweek data
+                'gameweek_points': gameweek_points,
+                'final_points': final_points,
+                'minutes': player_live_data.get('minutes', 0),
+                'goals_scored': player_live_data.get('goals_scored', 0),
+                'assists': player_live_data.get('assists', 0),
+                'clean_sheets': player_live_data.get('clean_sheets', 0),
+                'goals_conceded': player_live_data.get('goals_conceded', 0),
+                'yellow_cards': player_live_data.get('yellow_cards', 0),
+                'red_cards': player_live_data.get('red_cards', 0),
+                'saves': player_live_data.get('saves', 0),
+                'bonus': player_live_data.get('bonus', 0),
+                'bps': player_live_data.get('bps', 0)
+            }
+            
+            # Separate starting XI from bench (positions 1-11 are starting, 12-15 are bench)
+            if pick['position'] <= 11:
+                starting_xi.append(player_data)
+            else:
+                bench.append(player_data)
+        
+        # Sort players by position for display
+        starting_xi.sort(key=lambda x: x['squad_position'])
+        bench.sort(key=lambda x: x['squad_position'])
+        
+        # Check for active chip
+        active_chip = team_data.get('active_chip')
+        entry_history = team_data.get('entry_history', {})
+        
+        squad_data = {
+            'team': {
+                'id': team_id,
+                'name': team_name,
+                'manager': manager_name,
+                'total_points': total_points,
+                'rank': rank
+            },
+            'gameweek': gameweek,
+            'gameweek_points': entry_history.get('points', 0),
+            'transfers_cost': entry_history.get('event_transfers_cost', 0),
+            'net_points': entry_history.get('points', 0) - entry_history.get('event_transfers_cost', 0),
+            'team_value': entry_history.get('value', 0) / 10,
+            'bank': entry_history.get('bank', 0) / 10,
+            'starting_xi': starting_xi,
+            'bench': bench,
+            'active_chip': active_chip,
+            'captain_id': captain_id,
+            'vice_captain_id': vice_captain_id,
+            'has_live_data': len(live_data) > 0
+        }
+        
+        return jsonify(squad_data)
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"Team squad error: {error_details}")
+        return jsonify({"error": f"Failed to load team squad: {str(e)}"})   
 
+@app.route('/api/stats/most_owned_not_in_league/<int:gameweek>')
+def get_most_owned_not_in_league(gameweek):
+    """Get popular players not owned by anyone in the league"""
+    if not analyzer.league_id or not analyzer.teams:
+        return jsonify({"error": "No league configured"})
+    
+    try:
+        data = analyzer.most_owned_not_in_league(gameweek)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": f"Failed to get data: {str(e)}"})
+
+@app.route('/api/stats/cs_effect/<int:gameweek>')
+def get_cs_effect(gameweek):
+    """Get clean sheet effect analysis"""
+    if not analyzer.league_id or not analyzer.teams:
+        return jsonify({"error": "No league configured"})
+    
+    try:
+        data = analyzer.cs_effect(gameweek)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": f"Failed to get data: {str(e)}"})
+
+@app.route('/api/stats/matrix_by_pl_team/<int:gameweek>')
+def get_matrix_by_pl_team(gameweek):
+    """Get player ranking matrix by Premier League team"""
+    if not analyzer.league_id or not analyzer.teams:
+        return jsonify({"error": "No league configured"})
+    
+    try:
+        data = analyzer.matrix_by_pl_team(gameweek)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": f"Failed to get data: {str(e)}"})
+    
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5050)

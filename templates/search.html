@@ -201,8 +201,15 @@
                 const initials = player.web_name.substring(0, 2).toUpperCase();
                 
                 html += `
-                    <div class="suggestion-item" onclick="selectPlayer(${player.id}, '${player.web_name}', '${player.full_name}', '${player.team_name}', '${player.position_name}', ${player.now_cost})">
-                        <div class="player-avatar">${initials}</div>
+                    <div class="suggestion-item" onclick="selectPlayer(${player.id}, '${player.web_name}', '${player.full_name}', '${player.team_name}', '${player.position_name}', ${player.now_cost}, '${player.photo || ''}')">
+                        <div class="player-avatar">
+                            ${player.photo ? 
+                                `<img src="${player.photo}" alt="${player.full_name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="player-initials" style="display: none;">${initials}</div>` 
+                                : 
+                                `<div class="player-initials">${initials}</div>`
+                            }
+                        </div>
                         <div class="player-info">
                             <div class="player-name">${player.full_name}</div>
                             <div class="player-details">
@@ -214,17 +221,18 @@
             });
             
             suggestionsContainer.innerHTML = html;
-        }
-        
+        }        
+
         // Select a player and load their league stats
-        async function selectPlayer(playerId, webName, fullName, teamName, position, price) {
+        async function selectPlayer(playerId, webName, fullName, teamName, position, price, photo = '') {
             selectedPlayer = {
                 id: playerId,
                 web_name: webName,
                 full_name: fullName,
                 team_name: teamName,
                 position: position,
-                price: price
+                price: price,
+                photo: photo
             };
             
             // Hide suggestions
@@ -242,6 +250,7 @@
             // Load player league stats
             await loadPlayerLeagueStats(playerId, currentGameweek);
         }
+
         
         // Display player header
         function displayPlayerHeader(player) {
@@ -251,7 +260,14 @@
             const html = `
                 <div class="player-stats-card">
                     <div class="player-header">
-                        <div class="player-avatar-large">${initials}</div>
+                        <div class="player-avatar-large">
+                            ${player.photo ? 
+                                `<img src="${player.photo}" alt="${player.full_name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="player-initials-large" style="display: none;">${initials}</div>` 
+                                : 
+                                `<div class="player-initials-large">${initials}</div>`
+                            }
+                        </div>
                         <div class="player-header-info">
                             <h2>${player.full_name}</h2>
                             <div class="player-header-details">
@@ -264,8 +280,8 @@
             
             headerContainer.innerHTML = html;
             headerContainer.style.display = 'block';
-        }
-        
+        }       
+
         // Load player league statistics
         async function loadPlayerLeagueStats(playerId, gameweek) {
             const statsContainer = document.getElementById('stats-grid');
@@ -708,6 +724,68 @@
         /* Add spacing between player header and first stat card */
         .stats-grid {
             margin-top: 1.5rem;
+        }
+
+        /* Player avatar image styling - Lowered positioning */
+        .player-avatar img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            object-position: center 0%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .player-avatar-large img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            object-position: center 0%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .player-initials, .player-initials-large {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--pl-white);
+        }
+
+        .player-initials {
+            font-size: 1rem;
+        }
+
+        .player-initials-large {
+            font-size: 1.5rem;
+        }
+
+        /* Ensure avatar containers maintain their size and positioning */
+        .player-avatar {
+            position: relative;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--pl-purple);
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .player-avatar-large {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--pl-purple);
+            flex-shrink: 0;
+            overflow: hidden;
         }
     </style>
 </body>

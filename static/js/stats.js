@@ -155,6 +155,135 @@ function toggleStatCard(statType) {
     }
 }
 
+// Add these new formatting functions to stats.js
+
+function formatMostOwnedNotInLeagueData(data) {
+    if (!data || data.length === 0) {
+        return '<div class="stat-placeholder">All popular players are owned by someone in your league!</div>';
+    }
+    
+    let html = `<div style="margin-bottom: 1rem; padding: 0.75rem; background: var(--pl-purple); color: white; border-radius: 8px; text-align: center;">
+        <strong>Missing Popular Players</strong><br>
+        <small>Popular players (>10% ownership) not in your league</small>
+    </div>`;
+    
+    html += '<div style="max-height: 400px; overflow-y: auto; padding-right: 0.5rem;">';
+    
+    data.forEach(player => {
+        html += `
+            <div style="margin-bottom: 0.75rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: 8px; border-left: 3px solid #ef4444;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong style="color: var(--text-primary);">${player.name}</strong>
+                    </div>
+                    <div style="background: #ef4444; color: white; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">
+                        ${player.ownership}% owned
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    return html;
+}
+
+function formatCsEffectData(data) {
+    let html = `<div style="margin-bottom: 1rem; padding: 0.75rem; background: var(--pl-purple); color: white; border-radius: 8px; text-align: center;">
+        <strong>Clean Sheet Potential</strong><br>
+        <small>Potential points if defensive players keep clean sheets</small>
+    </div>`;
+    
+    html += '<div style="max-height: 400px; overflow-y: auto; padding-right: 0.5rem;">';
+    
+    for (const [plTeam, managerData] of Object.entries(data)) {
+        if (Object.keys(managerData).length === 0) continue;
+        
+        html += `
+            <div class="team-section">
+                <h4 class="team-header">${plTeam}</h4>
+                <div class="team-managers">
+        `;
+        
+        const sortedPoints = Object.entries(managerData).sort((a, b) => parseInt(b[0]) - parseInt(a[0]));
+        
+        for (const [points, managers] of sortedPoints) {
+            if (parseInt(points) > 0) {
+                html += `
+                    <div style="margin-bottom: 0.5rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: 6px; border-left: 3px solid var(--pl-green);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="color: var(--text-primary);">${points} potential points</strong>
+                                <div class="managers-list" style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                    ${managers.join(', ')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        html += '</div></div>';
+    }
+    
+    html += '</div>';
+    return html;
+}
+
+function formatMatrixByPlTeamData(data) {
+    let html = `<div style="margin-bottom: 1rem; padding: 0.75rem; background: var(--pl-purple); color: white; border-radius: 8px; text-align: center;">
+        <strong>Player Matrix by Team</strong><br>
+        <small>Manager rankings for each player grouped by Premier League team</small>
+    </div>`;
+    
+    html += '<div style="max-height: 400px; overflow-y: auto; padding-right: 0.5rem;">';
+    
+    for (const [plTeam, players] of Object.entries(data)) {
+        if (Object.keys(players).length === 0) continue;
+        
+        html += `
+            <div class="team-section">
+                <h4 class="team-header">${plTeam}</h4>
+                <div class="players-list">
+        `;
+        
+        for (const [playerName, managerRatings] of Object.entries(players)) {
+            html += `
+                <div class="player-section">
+                    <h5 class="player-name">${playerName}</h5>
+                    <div class="manager-ratings">
+            `;
+            
+            // Group managers by rating
+            const ratingGroups = {};
+            managerRatings.forEach(([manager, rating]) => {
+                if (!ratingGroups[rating]) ratingGroups[rating] = [];
+                ratingGroups[rating].push(manager);
+            });
+            
+            const sortedRatings = Object.entries(ratingGroups).sort((a, b) => parseFloat(b[0]) - parseFloat(a[0]));
+            
+            for (const [rating, managers] of sortedRatings) {
+                const ratingClass = parseFloat(rating) > 0 ? 'positive' : parseFloat(rating) < 0 ? 'negative' : 'neutral';
+                html += `
+                    <div class="rating-group ${ratingClass}">
+                        <span class="rating-value">${rating}:</span>
+                        <span class="managers">${managers.join(', ')}</span>
+                    </div>
+                `;
+            }
+            
+            html += '</div></div>';
+        }
+        
+        html += '</div></div>';
+    }
+    
+    html += '</div>';
+    return html;
+}
+
 // Data Formatting Functions (keeping the same formatting functions from before)
 function formatStatData(data, statType) {
     switch (statType) {
@@ -170,6 +299,13 @@ function formatStatData(data, statType) {
             return formatUniqueData(data);
         case 'representation':
             return formatRepresentationData(data);
+        case 'most_owned_not_in_league':
+            return formatMostOwnedNotInLeagueData(data);
+        case 'cs_effect':
+            return formatCsEffectData(data);
+        case 'matrix_by_pl_team':
+            return formatMatrixByPlTeamData(data);
+
         default:
             return '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
     }

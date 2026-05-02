@@ -102,6 +102,8 @@
     /* Adjust PL colors for dark mode */
     --pl-green: #00ff85;
     --pl-dark-green: #00e676;
+    --pl-purple: #5d0963;
+    --pl-light-purple: #6a206f;
 }
 
 /* Base Styles */
@@ -904,6 +906,937 @@ body {
     }
 }
 
+/* Team Squad Modal Styles */
+.team-squad-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2000;
+    display: none;
+}
+
+.team-squad-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.team-squad-content {
+    position: relative;
+    background: var(--bg-card);
+    border-radius: 12px;
+    margin: 2rem auto;
+    max-width: 95%;
+    width: 100%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border: 2px solid var(--border);
+}
+
+.squad-header {
+    background: linear-gradient(135deg, var(--pl-purple) 0%, var(--pl-light-purple) 100%);
+    color: var(--pl-white);
+    padding: 1.5rem;
+    border-radius: 12px 12px 0 0;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.squad-header-info h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.manager-name {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin-bottom: 0.75rem;
+}
+
+.squad-stats {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.gw-points {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.transfer-cost {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    color: #ffcccc;
+}
+
+.chip-badge {
+    background: var(--pl-green);
+    color: var(--pl-purple);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.close-modal-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: var(--pl-white);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.close-modal-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.squad-content {
+    padding: 1.5rem;
+}
+
+.starting-xi-section, .bench-section {
+    margin-bottom: 2rem;
+}
+
+.starting-xi-section h4, .bench-section h4 {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.starting-xi-section h4 i {
+    color: var(--pl-green);
+}
+
+.bench-section h4 i {
+    color: var(--text-secondary);
+}
+
+.starting-xi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+.bench-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+.player-card {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    position: relative;
+    transition: all 0.2s ease;
+    width: 160px; /* Fixed width */
+    height: auto;
+    min-height: 240px; /* Minimum height for consistency */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.player-card:hover {
+    border-color: var(--pl-green);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-hover);
+}
+
+.player-card.not-playing {
+    opacity: 0.6;
+    background: var(--bg-secondary);
+    border-color: var(--text-muted);
+}
+
+.captain-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    z-index: 10;
+}
+
+.captain-badge.captain {
+    background: var(--pl-green);
+    color: var(--pl-purple);
+    border: 2px solid var(--pl-purple);
+}
+
+.captain-badge.vice-captain {
+    background: var(--pl-purple);
+    color: var(--pl-white);
+    border: 2px solid var(--pl-green);
+}
+
+.player-photo {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 0.75rem;
+    position: relative;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--pl-purple);
+}
+
+.player-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 0%;
+}
+
+.player-initials {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: var(--pl-white);
+    font-size: 1.2rem;
+}
+
+.player-info {
+    font-size: 0.85rem;
+    line-height: 1.3;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 140px; /* Minimum height for info section */
+}
+
+/* Fixed width text elements with ellipsis for overflow */
+.player-name {
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.2rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.player-team {
+    color: var(--text-secondary);
+    margin-bottom: 0.2rem;
+    font-weight: 500;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.player-position {
+    color: var(--pl-green);
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.player-price {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.player-points {
+    color: var(--pl-purple);
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-top: auto; /* Push to bottom */
+    text-align: center;
+    min-height: 40px; /* Reserve space for points */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.not-playing-text {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.8rem;
+    margin-top: auto;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.squad-summary {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.summary-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.stat-value {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.loading-container {
+    text-align: center;
+    padding: 3rem;
+}
+
+.loading-container .loading-spinner {
+    margin: 0 auto 1rem;
+}
+
+.loading-container p {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Clickable team names */
+.clickable-team {
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.clickable-team:hover {
+    color: var(--pl-green) !important;
+    text-decoration: underline;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    .team-squad-content {
+        margin: 1rem;
+        max-height: 95vh;
+        max-width: none;
+        width: calc(100% - 2rem);
+    }
+    
+    .squad-header {
+        padding: 1rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .close-modal-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+    }
+    
+    .squad-stats {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .starting-xi-grid, .bench-grid {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 0.75rem;
+    }
+    
+    .squad-content {
+        padding: 1rem;
+    }
+    
+    .squad-summary {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .starting-xi-grid, .bench-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .player-card {
+        padding: 0.75rem;
+    }
+    
+    .player-photo {
+        width: 50px;
+        height: 50px;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Add these styles to the existing player card styles */
+
+.player-points {
+    color: var(--pl-purple);
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    text-align: center;
+}
+
+.player-points strong {
+    color: var(--pl-green);
+    font-size: 0.9rem;
+}
+
+.player-points small {
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+.player-stats {
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    margin-top: 0.25rem;
+    text-align: center;
+    line-height: 1.2;
+    padding: 0.25rem;
+    background: var(--bg-primary);
+    border-radius: 4px;
+    border: 1px solid var(--border-light);
+    min-height: 24px; /* Reserve space for stats */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    word-break: break-all; /* Break long stats if needed */
+}
+
+.player-card.not-playing .player-stats {
+    opacity: 0.6;
+}
+
+/* Improve player card spacing */
+.player-info {
+    font-size: 0.85rem;
+    line-height: 1.3;
+}
+
+.player-name {
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.2rem;
+    font-size: 0.9rem;
+}
+
+.player-team {
+    color: var(--text-secondary);
+    margin-bottom: 0.2rem;
+    font-weight: 500;
+    font-size: 0.8rem;
+}
+
+.player-position {
+    color: var(--pl-green);
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+    font-size: 0.8rem;
+}
+
+.player-price {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+}
+
+/* Position Section Styles */
+.position-section {
+    margin-bottom: 1.5rem;
+}
+
+.position-title {
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    border-bottom: 2px solid var(--border);
+}
+
+.position-title i {
+    color: var(--pl-green);
+    font-size: 0.9rem;
+    width: 1.2rem;
+    text-align: center;
+}
+
+/* Position-specific icon colors */
+.position-section:nth-child(1) .position-title i {
+    color: #ff6b35; /* Goalkeeper - Orange */
+}
+
+.position-section:nth-child(2) .position-title i {
+    color: #4a90e2; /* Defenders - Blue */
+}
+
+.position-section:nth-child(3) .position-title i {
+    color: var(--pl-green); /* Midfielders - Green */
+}
+
+.position-section:nth-child(4) .position-title i {
+    color: #e74c3c; /* Forwards - Red */
+}
+
+.position-players-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 160px)); /* Fixed width */
+    gap: 1rem;
+    justify-content: center; /* Center the grid */
+}
+
+
+/* Adjust starting XI section */
+.starting-xi-section {
+    margin-bottom: 2rem;
+}
+
+.starting-xi-section h4 {
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 3px solid var(--pl-green);
+}
+
+.starting-xi-section h4 i {
+    color: var(--pl-green);
+    font-size: 1.1rem;
+}
+
+/* Bench section styling updates */
+.bench-section h4 {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 3px solid var(--text-secondary);
+}
+
+.bench-section h4 i {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+/* Live indicator styling */
+.live-indicator {
+    color: var(--pl-green) !important;
+    font-weight: 700;
+    position: relative;
+}
+
+.live-indicator::before {
+    content: "●";
+    color: var(--pl-green);
+    margin-right: 0.25rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Formation layout improvements */
+.position-players-grid {
+    justify-items: center;
+}
+
+/* Special styling for single goalkeeper */
+.position-section:first-child .position-players-grid {
+    justify-content: center;
+    grid-template-columns: 160px; /* Single fixed width column */
+    max-width: 160px;
+    margin: 0 auto;
+}
+
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .position-players-grid {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 140px));
+        gap: 0.75rem;
+    }
+    
+    .bench-grid {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 140px));
+        max-width: 600px; /* Adjust for smaller cards */
+    }
+    
+    .player-card,
+    .bench-player {
+        width: 140px;
+        min-height: 220px;
+        padding: 0.75rem;
+    }
+    
+    .position-section:first-child .position-players-grid {
+        grid-template-columns: 140px;
+        max-width: 140px;
+    }
+    
+    .player-info {
+        min-height: 130px;
+    }
+}
+
+@media (max-width: 480px) {
+    .position-players-grid {
+        grid-template-columns: repeat(2, 1fr);
+        justify-content: stretch;
+    }
+    
+    .bench-grid {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: none;
+    }
+    
+    .player-card,
+    .bench-player {
+        width: 100%; /* Full width on very small screens */
+        min-width: 120px;
+        min-height: 200px;
+    }
+    
+    .position-section:first-child .position-players-grid {
+        grid-template-columns: 1fr;
+        max-width: none;
+    }
+    
+    .player-info {
+        min-height: 120px;
+    }
+    
+    .player-stats {
+        font-size: 0.65rem;
+        padding: 0.2rem;
+    }
+}
+
+
+/* Formation-like spacing for better visual organization */
+.position-section:nth-child(1) {
+    /* Goalkeeper */
+    margin-bottom: 2rem;
+}
+
+.position-section:nth-child(2) {
+    /* Defenders */
+    margin-bottom: 1.5rem;
+}
+
+.position-section:nth-child(3) {
+    /* Midfielders */
+    margin-bottom: 1.5rem;
+}
+
+.position-section:nth-child(4) {
+    /* Forwards */
+    margin-bottom: 1rem;
+}
+
+/* Position section background for better separation */
+.position-section {
+    background: var(--bg-primary);
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid var(--border-light);
+    margin-bottom: 1.5rem;
+}
+
+.position-section:hover {
+    background: var(--bg-secondary);
+    transition: background 0.2s ease;
+}
+
+/* Formation display styling */
+.formation-display {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 1px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Bench player specific styling */
+.bench-player {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border);
+    opacity: 0.85;
+    position: relative;
+    width: 160px; /* Same fixed width */
+    min-height: 240px; /* Same minimum height */
+}
+
+.bench-player:hover {
+    opacity: 1;
+    border-color: var(--text-secondary);
+    transform: translateY(-1px);
+}
+
+.bench-indicator {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    background: var(--text-secondary);
+    color: var(--bg-card);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    z-index: 10;
+    border: 2px solid var(--bg-card);
+}
+
+.bench-position {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 0.6rem;
+    font-weight: 700;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.bench-points {
+    color: var(--text-secondary) !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-top: auto;
+    text-align: center;
+    min-height: 40px; /* Same as regular player points */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+
+.bench-points strong {
+    color: var(--text-primary) !important;
+    font-size: 0.9rem;
+}
+
+.bench-points small {
+    color: var(--text-muted);
+    font-weight: 400;
+    display: block;
+    margin-top: 0.1rem;
+}
+
+/* Enhanced bench section */
+.bench-section h4 {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 3px solid var(--text-secondary);
+}
+
+.bench-section h4 i {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+/* Squad stats layout improvements */
+.squad-stats {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* Enhanced live indicator */
+.live-indicator {
+    color: var(--pl-green) !important;
+    font-weight: 700;
+    position: relative;
+}
+
+.live-indicator::before {
+    content: "●";
+    color: var(--pl-green);
+    margin-right: 0.25rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Position-specific styling enhancements */
+.position-section:nth-child(1) .position-title i {
+    color: #ff6b35; /* Goalkeeper - Orange */
+}
+
+.position-section:nth-child(2) .position-title i {
+    color: #4a90e2; /* Defenders - Blue */
+}
+
+.position-section:nth-child(3) .position-title i {
+    color: var(--pl-green); /* Midfielders - Green */
+}
+
+.position-section:nth-child(4) .position-title i {
+    color: #e74c3c; /* Forwards - Red */
+}
+
+/* Responsive adjustments for formation display */
+@media (max-width: 768px) {
+    .squad-stats {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .formation-display {
+        font-size: 0.8rem;
+        padding: 0.2rem 0.6rem;
+    }
+    
+    .bench-indicator {
+        width: 24px;
+        height: 24px;
+        top: -6px;
+        left: -6px;
+    }
+    
+    .bench-position {
+        width: 10px;
+        height: 10px;
+        font-size: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .formation-display {
+        font-size: 0.75rem;
+        padding: 0.15rem 0.5rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .squad-stats {
+        gap: 0.4rem;
+    }
+}
+
+/* Formation display variations for different formations */
+.formation-display[data-formation="4-4-2"],
+.formation-display[data-formation="4-3-3"],
+.formation-display[data-formation="3-5-2"] {
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.15), rgba(0, 255, 133, 0.1));
+}
+
+/* Bench grid improvements */
+.bench-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 160px)); /* Fixed width */
+    gap: 1rem;
+    justify-content: center; /* Center the grid */
+    max-width: 680px; /* 4 cards × 160px + gaps */
+    margin: 0 auto; /* Center the entire bench grid */
+}
+
+@media (max-width: 768px) {
+    .bench-grid {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .bench-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+}
+
 /* For single export button (pre-season) - keep existing styling */
 .teams-list .export-button,
 .live-table-placeholder .export-button {
@@ -912,4 +1845,690 @@ body {
     width: 100%;
     max-width: 250px;
     flex: none;
+}
+
+
+
+/* Formation Toggle Styles */
+.formation-toggle-container {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.formation-toggle-buttons {
+    display: inline-flex;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 0.25rem;
+    box-shadow: 0 2px 8px var(--shadow);
+    border: 2px solid var(--border);
+}
+
+.formation-toggle-btn {
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.formation-toggle-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.formation-toggle-btn.active {
+    background: var(--pl-green);
+    color: var(--pl-purple);
+    box-shadow: 0 2px 4px var(--shadow);
+}
+
+.formation-toggle-btn i {
+    font-size: 0.9rem;
+}
+
+/* Formation View Styles */
+.formation-view {
+    display: none;
+}
+
+.formation-view.active {
+    display: block;
+}
+
+.formation-pitch {
+    background: linear-gradient(180deg, #4CAF50 0%, #2E7D32 100%);
+    border-radius: 12px;
+    padding: 2rem 1rem;
+    margin: 1rem 0;
+    position: relative;
+    min-height: 400px;
+    border: 3px solid var(--pl-white);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.formation-pitch::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--pl-white);
+    opacity: 0.8;
+}
+
+.formation-pitch::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px;
+    height: 80px;
+    border: 2px solid var(--pl-white);
+    border-radius: 50%;
+    opacity: 0.6;
+}
+
+.formation-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 1rem 0;
+    position: relative;
+    z-index: 2;
+}
+
+.formation-line-players {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    max-width: 100%;
+}
+
+
+
+/* Row-specific spacing */
+.forwards-row {
+    margin-bottom: 2rem;
+}
+
+.midfielders-row {
+    margin: 2rem 0;
+}
+
+.defenders-row {
+    margin: 2rem 0;
+}
+
+.goalkeeper-row {
+    margin-top: 2rem;
+}
+
+/* Formation Player Styles */
+.formation-player {
+    background: var(--bg-card);
+    border: 3px solid var(--pl-purple);
+    border-radius: 12px;
+    padding: 0.75rem;
+    text-align: center;
+    position: relative;
+    transition: all 0.2s ease;
+    width: 100px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.formation-player:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    border-color: var(--pl-green);
+}
+
+.formation-player.not-playing {
+    opacity: 0.5;
+    border-color: var(--text-muted);
+    background: var(--bg-secondary);
+}
+
+.formation-player-photo {
+    width: 50px;
+    height: 50px;
+    margin: 0 auto 0.5rem;
+    position: relative;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--pl-purple);
+    border: 2px solid var(--pl-white);
+}
+
+.formation-player-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 0%;
+}
+
+.formation-player-initials {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: var(--pl-white);
+    font-size: 1rem;
+}
+
+.formation-player-info {
+    font-size: 0.8rem;
+}
+
+.formation-player-name {
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.formation-player-points {
+    color: var(--pl-green);
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+.formation-player-points strong {
+    color: var(--text-primary);
+}
+
+.formation-player .not-playing-text {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-style: italic;
+}
+
+/* Captain badges in formation view */
+.formation-player .captain-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.7rem;
+    z-index: 10;
+}
+
+.formation-player .captain-badge.captain {
+    background: var(--pl-green);
+    color: var(--pl-purple);
+    border: 2px solid var(--pl-purple);
+}
+
+.formation-player .captain-badge.vice-captain {
+    background: var(--pl-purple);
+    color: var(--pl-white);
+    border: 2px solid var(--pl-green);
+}
+
+/* Position-specific styling in formation */
+.forwards-row .formation-player {
+    border-color: #e74c3c;
+}
+
+.midfielders-row .formation-player {
+    border-color: var(--pl-green);
+}
+
+.defenders-row .formation-player {
+    border-color: #4a90e2;
+}
+
+.goalkeeper-row .formation-player {
+    border-color: #ff6b35;
+}
+
+/* Responsive Formation View */
+@media (max-width: 768px) {
+    .formation-toggle-btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+    }
+    
+    .formation-pitch {
+        padding: 1.5rem 0.5rem;
+        min-height: 350px;
+    }
+    
+    .formation-player {
+        width: 85px;
+        padding: 0.5rem;
+    }
+    
+    .formation-player-photo {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 0.4rem;
+    }
+    
+    .formation-player-name {
+        font-size: 0.7rem;
+    }
+    
+    .formation-player-points {
+        font-size: 0.75rem;
+    }
+    
+    .formation-line-players {
+        gap: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .formation-toggle-buttons {
+        flex-direction: column;
+        width: 100%;
+        max-width: 280px;
+        margin: 0 auto;
+    }
+    
+    .formation-toggle-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .formation-pitch {
+        padding: 1rem 0.25rem;
+        min-height: 300px;
+    }
+    
+    .formation-player {
+        width: 75px;
+        padding: 0.4rem;
+    }
+    
+    .formation-player-photo {
+        width: 35px;
+        height: 35px;
+        margin-bottom: 0.3rem;
+    }
+    
+    .formation-player-name {
+        font-size: 0.65rem;
+    }
+    
+    .formation-player-points {
+        font-size: 0.7rem;
+    }
+    
+    .formation-line-players {
+        gap: 0.5rem;
+    }
+    
+    .formation-row {
+        margin: 0.75rem 0;
+    }
+}
+
+/* Ensure formation players don't get too small */
+@media (max-width: 360px) {
+    .formation-line-players {
+        justify-content: space-around;
+    }
+    
+    .formation-player {
+        min-width: 65px;
+    }
+}
+
+/* Formation Bench Styles - Fixed overflow */
+.formation-bench {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 1.5rem;
+    border: 2px solid var(--border);
+    box-shadow: 0 2px 8px var(--shadow);
+    overflow: hidden; /* Prevent any overflow */
+}
+
+.formation-bench-title {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--text-secondary);
+}
+
+.formation-bench-title i {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+.formation-bench-row {
+    display: flex;
+    justify-content: space-between; /* Distribute evenly */
+    align-items: stretch;
+    gap: 0.5rem;
+    width: 100%;
+    overflow: hidden; /* Prevent overflow */
+}
+
+.formation-bench-player {
+    background: var(--bg-secondary);
+    border: 2px solid var(--text-secondary);
+    border-radius: 12px;
+    padding: 0.5rem;
+    text-align: center;
+    position: relative;
+    transition: all 0.2s ease;
+    width: calc(25% - 0.375rem); /* 25% minus gap compensation */
+    min-height: 130px;
+    max-height: 130px;
+    opacity: 0.85;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-shrink: 1; /* Allow slight shrinking if needed */
+}
+
+.formation-bench-player:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-hover);
+    border-color: var(--pl-green);
+    opacity: 1;
+}
+
+.bench-position-indicator {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    background: var(--text-secondary);
+    color: var(--bg-card);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    z-index: 10;
+    border: 2px solid var(--bg-card);
+}
+
+.formation-bench-player .formation-player-photo {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 0.4rem;
+    position: relative;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--pl-purple);
+    border: 2px solid var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.formation-bench-player .formation-player-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 50px;
+    overflow: hidden;
+}
+
+.formation-bench-player .formation-player-name {
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    line-height: 1.2;
+}
+
+.formation-bench-player .formation-player-points {
+    color: var(--text-secondary);
+    margin-top: auto;
+    text-align: center;
+    min-height: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.formation-bench-player .formation-player-points strong {
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+.formation-bench-player .formation-player-points small {
+    color: var(--text-muted);
+    font-weight: 400;
+    display: block;
+    margin-top: 0.1rem;
+    font-size: 0.65rem;
+    line-height: 1;
+}
+
+.formation-bench-player .formation-player-initials {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: var(--pl-white);
+    font-size: 0.8rem;
+}
+
+.formation-bench-player .formation-player-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 0%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .formation-bench {
+        padding: 0.75rem;
+    }
+    
+    .formation-bench-row {
+        gap: 0.4rem;
+    }
+    
+    .formation-bench-player {
+        width: calc(25% - 0.3rem); /* Adjust for smaller gap */
+        min-height: 115px;
+        max-height: 115px;
+        padding: 0.4rem;
+    }
+    
+    .formation-bench-player .formation-player-photo {
+        width: 35px;
+        height: 35px;
+        margin-bottom: 0.3rem;
+    }
+    
+    .bench-position-indicator {
+        width: 18px;
+        height: 18px;
+        top: -5px;
+        left: -5px;
+        font-size: 0.6rem;
+    }
+    
+    .formation-bench-player .formation-player-name {
+        font-size: 0.65rem;
+    }
+    
+    .formation-bench-player .formation-player-points strong {
+        font-size: 0.7rem;
+    }
+    
+    .formation-bench-player .formation-player-points small {
+        font-size: 0.6rem;
+    }
+    
+    .formation-bench-player .formation-player-info {
+        min-height: 45px;
+    }
+    
+    .formation-bench-player .formation-player-points {
+        min-height: 22px;
+    }
+}
+
+@media (max-width: 480px) {
+    .formation-bench {
+        padding: 0.5rem;
+    }
+    
+    .formation-bench-row {
+        gap: 0.3rem;
+    }
+    
+    .formation-bench-player {
+        width: calc(25% - 0.225rem); /* Adjust for smaller gap */
+        min-height: 100px;
+        max-height: 100px;
+        padding: 0.3rem;
+    }
+    
+    .formation-bench-player .formation-player-photo {
+        width: 30px;
+        height: 30px;
+        margin-bottom: 0.25rem;
+    }
+    
+    .formation-bench-title {
+        font-size: 0.95rem;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+    }
+    
+    .formation-bench-player .formation-player-name {
+        font-size: 0.6rem;
+    }
+    
+    .formation-bench-player .formation-player-points strong {
+        font-size: 0.65rem;
+    }
+    
+    .formation-bench-player .formation-player-points small {
+        font-size: 0.55rem;
+    }
+    
+    .formation-bench-player .formation-player-info {
+        min-height: 40px;
+    }
+    
+    .formation-bench-player .formation-player-points {
+        min-height: 20px;
+    }
+    
+    .formation-bench-player .formation-player-initials {
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .formation-bench {
+        padding: 0.4rem;
+    }
+    
+    .formation-bench-row {
+        gap: 0.2rem;
+    }
+    
+    .formation-bench-player {
+        width: calc(25% - 0.15rem); /* Adjust for very small gap */
+        min-height: 90px;
+        max-height: 90px;
+        padding: 0.25rem;
+    }
+    
+    .formation-bench-player .formation-player-photo {
+        width: 25px;
+        height: 25px;
+        margin-bottom: 0.2rem;
+    }
+    
+    .bench-position-indicator {
+        width: 16px;
+        height: 16px;
+        top: -4px;
+        left: -4px;
+        font-size: 0.55rem;
+    }
+    
+    .formation-bench-player .formation-player-name {
+        font-size: 0.55rem;
+        margin-bottom: 0.15rem;
+    }
+    
+    .formation-bench-player .formation-player-points strong {
+        font-size: 0.6rem;
+    }
+    
+    .formation-bench-player .formation-player-points small {
+        font-size: 0.5rem;
+    }
+    
+    .formation-bench-player .formation-player-info {
+        min-height: 35px;
+    }
+    
+    .formation-bench-player .formation-player-points {
+        min-height: 18px;
+    }
+    
+    .formation-bench-player .formation-player-initials {
+        font-size: 0.65rem;
+    }
+}
+
+/* Ensure no overflow in any case */
+.formation-bench-row {
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+.formation-bench-player {
+    box-sizing: border-box;
+    min-width: 0; /* Allow shrinking if absolutely necessary */
+}
+
+/* Ensure text doesn't break layout */
+.formation-bench-player * {
+    word-break: break-word;
+    hyphens: auto;
+    box-sizing: border-box;
 }

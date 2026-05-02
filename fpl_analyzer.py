@@ -140,7 +140,11 @@ class FPLAnalyzer:
             "transfers": self.get_transfer_stats,
             "rankings": self.get_manager_rankings,
             "unique": self.get_unique_players,
-            "representation": self.get_team_representation
+            "representation": self.get_team_representation,
+            "most_owned_not_in_league": self.most_owned_not_in_league,
+            "cs_effect": self.cs_effect,
+            "matrix_by_pl_team": self.matrix_by_pl_team
+
         }
         
         if stat_type in stat_functions:
@@ -571,7 +575,7 @@ class FPLAnalyzer:
                     'ep_next': safe_float(player.get('ep_next', 0)),   # Expected points next gameweek
                     'special': player.get('special', False),
                     'squad_number': safe_int(player.get('squad_number')),
-                    'photo': f"https://resources.premierleague.com/premierleague/photos/players/250x250/p{player.get('photo', '').replace('.jpg', '.png')}" if player.get('photo') else None
+                    'photo': f"https://resources.premierleague.com/premierleague25/photos/players/110x140/{player.get('photo', '').replace('.jpg', '.png')}" if player.get('photo') else None
                 }
                 
                 matching_players.append(player_info)
@@ -733,3 +737,232 @@ class FPLAnalyzer:
         stats['transfers']['net_transfers'] = len(stats['transfers']['transferred_in']) - len(stats['transfers']['transferred_out'])
         
         return stats
+    
+    def _get_position_name(self, position_id):
+        """Get position name from bootstrap data"""
+        if not self.gdata or not self.gdata.get('element_types'):
+            return f"Position {position_id}"
+        
+        for position in self.gdata['element_types']:
+            if position['id'] == position_id:
+                return position['singular_name']
+        return f"Position {position_id}"
+    
+
+    def most_owned_not_in_league(self, gameweek):
+        """Find popular players (>10% ownership) not owned by anyone in the league"""
+        if not self.teams or not self.gdata:
+            return {"error": "Data not loaded"}
+        
+        # Get all players sorted by ownership percentage
+        sorted_players = sorted(self.gdata["elements"], 
+                            key=lambda x: float(x['selected_by_percent']), reverse=True)
+        
+        # Get all players used in the league for this GW
+        league_players = self.get_league_players(gameweek)
+        
+        not_owned = []
+        for player in sorted_players:
+            if float(player['selected_by_percent']) <= 10:
+                break
+            if player["id"] not in league_players:
+                not_owned.append({
+                    'name': player['web_name'],
+                    'ownership': player['selected_by_percent'],
+                    'id': player['id']
+                })
+        
+        return not_owned
+
+    def get_league_players(self, gameweek):
+        """Get set of all player IDs used in the league for a gameweek"""
+        players = set()
+        for team in self.teams:
+            team_id = team["entry"]
+            data = self.get_team_gw_info(team_id, gameweek)
+            if data and data.get("picks"):
+                for player in data["picks"]:
+                    players.add(player["element"])
+        return players
+
+    def cs_effect(self, gameweek):
+        """Calculate potential clean sheet points for each manager by PL team"""
+        if not self.teams or not self.gdata:
+            return {"error": "Data not loaded"}
+        
+        team_dict = {}
+        
+        # Initialize dictionary for each PL team
+        for pl_team in self.gdata["teams"]:
+            team_dict[pl_team["name"]] = {}
+        
+        # Process each manager's team
+        for team in self.teams:
+            team_id = team["entry"]
+            team_name = team["entry_name"]
+            gw_info = self.get_team_gw_info(team_id, gameweek)
+            
+            if not gw_info or not gw_info.get("picks"):
+                continue
+                
+            # Check for bench boost (16 players instead of 15)
+            if len(gw_info["picks"]) == 16:
+                pick = gw_info["picks"][-1]  # Extra player from bench boost
+                player_id = pick["element"]
+                player_info = self.get_player_struct(player_id)
+                if player_info:
+                    pl_team = self.gdata["teams"][player_info["team"] - 1]["name"]
+                    games_num = len(self.gw_struct_by_player_id(player_id, gameweek))
+                    
+                    if team_name not in team_dict[pl_team]:
+                        team_dict[pl_team][team_name] = 0
+                    team_dict[pl_team][team_name] += 2 * games_num
+            
+            # Process all picks
+            for pick in gw_info["picks"]:
+                player_id = pick["element"]
+                player_info = self.get_player_struct(player_id)
+                if not player_info:
+                    continue
+                    
+                games_num = len(self.gw_struct_by_player_id(player_id, gameweek))
+                pl_team = self.gdata["teams"][player_info["team"] - 1]["name"]
+                
+                # Only consider defensive players (GK, DEF, MID)
+                if player_info['element_type'] not in [1, 2, 3]:
+                    continue
+                    
+                if team_name not in team_dict[pl_team]:
+                    team_dict[pl_team][team_name] = 0
+                    
+                # Calculate potential CS points
+                if player_info['element_type'] in [1, 2]:  # GK or DEF
+                    team_dict[pl_team][team_name] += 4 * pick["multiplier"] * games_num
+                elif player_info['element_type'] == 3:  # MID
+                    team_dict[pl_team][team_name] += 1 * pick["multiplier"] * games_num
+        
+        # Group managers by their potential CS points for each team
+        result = {}
+        for pl_team, team_data in team_dict.items():
+            grouped_data = {}
+            for team_name, score in team_data.items():
+                if score not in grouped_data:
+                    grouped_data[score] = []
+                grouped_data[score].append(team_name)
+            result[pl_team] = grouped_data
+        
+        return result
+
+    def matrix_by_pl_team(self, gameweek):
+        """Create player ranking matrix grouped by Premier League team"""
+        if not self.teams or not self.gdata:
+            return {"error": "Data not loaded"}
+        
+        matrix, players = self.player_ranking_matrix(gameweek)
+        team_dict = {}
+        
+        # Initialize dictionary for each PL team
+        for pl_team in self.gdata["teams"]:
+            team_dict[pl_team["name"]] = {}
+        
+        # Group players by their PL team
+        for player in players:
+            player_id = player[4]  # Player ID is at index 4 in the EO structure
+            player_info = self.get_player_struct(player_id)
+            if not player_info:
+                continue
+                
+            pl_team = self.gdata["teams"][player_info["team"] - 1]["name"]
+            player_name = player[2]  # Player name is at index 2
+            
+            team_dict[pl_team][player_name] = []
+            
+            # Add each manager's rating for this player
+            for manager_name in matrix.keys():
+                if player_name in matrix[manager_name]:
+                    rating = matrix[manager_name][player_name]
+                    team_dict[pl_team][player_name].append((manager_name, rating))
+            
+            # Sort managers by their rating for this player
+            team_dict[pl_team][player_name].sort(key=lambda x: x[1], reverse=True)
+        
+        return team_dict
+
+    def player_ranking_matrix(self, gameweek):
+        """Create a matrix showing how each player ranks for each manager relative to others"""
+        if not self.teams or not self.gdata:
+            return {}, []
+        
+        players = self.get_effective_ownership(gameweek)
+        if 'error' in players:
+            return {}, []
+        
+        players_data = players.get('data', [])
+        matrix = {}
+        
+        # Initialize matrix for each manager
+        for team in self.teams:
+            matrix[team["entry_name"]] = {}
+        
+        # Calculate rating for each player for each manager
+        for player in players_data:
+            player_name = player['player']
+            ownership_pct = player['ownership']
+            team_names = player['teams']
+            captains = player['captains']
+            
+            for manager in self.teams:
+                manager_name = manager["entry_name"]
+                
+                if manager_name in team_names:
+                    # Manager owns the player
+                    if manager_name in captains:
+                        # Manager captained the player
+                        captain_val = 2
+                    else:
+                        # Manager owns but didn't captain
+                        captain_val = 1
+                    
+                    # Calculate score based on ownership and captaincy patterns
+                    other_ownership = (len(team_names) - 1) / len(self.teams)
+                    other_captaincy = (len(captains) - (1 if manager_name in captains else 0)) / len(self.teams)
+                    
+                    temp_score = captain_val - (other_ownership + 2 * other_captaincy)
+                else:
+                    # Manager doesn't own the player - negative score based on missed ownership
+                    temp_score = ownership_pct / (len(self.teams) * -10)
+                
+                matrix[manager_name][player_name] = round(temp_score, 2)
+        
+        # Convert players_data to the format expected by the frontend
+        formatted_players = []
+        for player in players_data:
+            formatted_players.append([
+                player['teams'],      # Index 0: team names
+                player['ownership'],  # Index 1: ownership percentage
+                player['player'],     # Index 2: player name
+                player['captains'],   # Index 3: captains
+                next((p['id'] for p in self.gdata['elements'] if p['web_name'] == player['player']), 0)  # Index 4: player ID
+            ])
+        
+        return matrix, formatted_players
+
+    def gw_struct_by_player_id(self, player_id, gameweek):
+        """Get gameweek structure for a specific player"""
+        player_info = self.fpl_api_get(f"element-summary/{player_id}/")
+        if not player_info or 'history' not in player_info:
+            return []
+        
+        gw_data = []
+        for game in player_info['history']:
+            if game['round'] == gameweek:
+                gw_data.append(game)
+        
+        return gw_data
+
+    def id_to_player_struct(self, player_id):
+        """Get full player structure from player ID"""
+        for player in self.general_data["elements"]:
+            if player["id"] == player_id:
+                return player
+        return None
